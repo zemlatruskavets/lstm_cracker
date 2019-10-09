@@ -8,7 +8,7 @@ Example
 To run the program, include the dataset containing the cleartext 
 passwords as the first argument. The code will handle the rest.
 
-$ python3 program.py
+    $ python3 program.py <path_to_dataset>
 
 Notes
 -----
