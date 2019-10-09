@@ -11,7 +11,7 @@ Example
     To run the program, include the dataset containing the cleartext 
     passwords as the first argument. The code will handle the rest.
 
-    $ python3 program.py <path_to_dataset>
+    $ python3 program.py
 
 Notes
 -----
@@ -136,8 +136,18 @@ class LSTM_network():
 
     """
 
-    def __init__():
-        # variables
+    def __init__(self, ):
+        self.epochs          = variables['model']['epochs']
+        self.batch_size      = variables['model']['batch_size']
+        self.hidden_units    = variables['model']['hidden_units']
+        self.model_name      = variables['model']['name']
+        self.data_path       = variables['S3']['data_path']
+        self.bucket          = variables['S3']['bucket_name']
+        self.tokenizer_name  = variables['S3']['tokenizer_name']
+        self.training_params = variables['S3']['training_params']
+        self.history_pkl     = variables['S3']['history_pkl']
+
+
 
 
     def data_load(self, ):
@@ -158,6 +168,19 @@ class LSTM_network():
             True if successful, False otherwise.
 
         """
+
+
+        # read the dataset from the S3 bucket and store it as a dask dataframe
+        with s3.open('%s/%s.parquet' % (self.bucket, self.data_path), 'rb') as f:
+            self.data = dd.read_parquet(f)
+
+        # drop the rows with NaN values 
+        self.data = self.data.dropna()
+
+        # get rid of duplicate logs
+        self.data = self.data.drop_duplicates()
+
+
 
 
 
@@ -181,6 +204,52 @@ class LSTM_network():
         """
 
 
+        self.unique_characters = sorted(list(set(''.join(self.data['sequences']))))
+        self.vocabulary_size   = len(self.unique_characters)
+
+
+
+
+    def tokenization(self, )
+
+        # get the sequence column as its own array
+        sequences = self.data['sequences']
+
+        # define the tokenizer 
+        self.tokenizer = Tokenizer(num_words=None, oov_token='UNK', char_level=True)
+
+        # generate the tokenized sequences      
+        self.tokenizer.fit_on_texts(sequences)
+
+        # generate the word-to-index dictionary 
+        self.word_to_ix = self.tokenizer.word_index
+
+        # generate the index-to-word dictionary too
+        self.ix_to_word = {i: j for j, i in self.word_to_ix.items()}
+
+        # persist the tokenizer
+        with s3.open('%s/%s' % (self.bucket, self.tokenizer_name), 'w') as f:
+            f.write(json.dumps(self.tokenizer.to_json(), ensure_ascii=False))
+
+        # save the index-to-word dictionary and self.vocabulary_size values
+        with s3.open('%s/%s' % (self.bucket, self.training_params), 'wb') as f:
+            pickle.dump([self.ix_to_word, self.self.vocabulary_size], f)
+
+        # this encodes the sequences
+        tokens = self.tokenizer.texts_to_sequences(sequences)
+
+        # save the tokenized sequences in a column of the dataframe
+        self.data['tokenized'] = tokens
+
+        # turn the tokenized column into a column of arrays (not lists)
+        self.data['tokenized'] = self.data['tokenized'].apply(lambda x: np.array(x))
+
+        # this gets rid of the <PAD> character
+        self.data['outputs'] = self.data['tokenized'] - 1
+
+
+
+
 
     def model_construction(self, ):
         """
@@ -201,6 +270,26 @@ class LSTM_network():
 
         """
 
+        # define the generator parameters
+        paramaters = {'self.vocabulary_size': self.self.vocabulary_size,
+                      'max_length':           self.max_length,
+                      'batch_size':           self.batch_size,
+                      'shuffle':              True}
+
+        # build the model
+        self.model = Sequential()
+        self.model.add(Embedding(input_dim=self.self.vocabulary_size + 1,             # vocabulary size plus an extra element for <PAD> 
+                                output_dim=int(self.self.vocabulary_size ** (1./4)),  # size of embeddings; fourth root of cardinality
+                                input_length=self.max_length - 1))                    # length of the padded sequences
+        self.model.add(Bidirectional(LSTM(50)))                                       # size of hidden layer; n_h ~= n_s / (2(n_i + n_o)) 
+        self.model.add(Dense(self.self.vocabulary_size, activation='softmax'))        # output
+        self.model.compile('rmsprop', 'categorical_crossentropy')
+
+        logger.info(self.model.summary())
+
+
+
+
 
 
     def model_training(self, ):
@@ -220,6 +309,60 @@ class LSTM_network():
         None
 
         """
+
+        # split the data into training and testing sets
+        training, testing = train_test_split(self.data, test_size=0.1)
+
+        # determine some of the dataset properties
+        training_index  = training.index.to_numpy()
+        testing_index   = testing.index.to_numpy()
+        training_length = len(training_index)
+        testing_length  = len(testing_index)
+
+        logger.info('finished getting data properties')
+
+        # check memory
+        logger.info(psutil.virtual_memory())
+
+
+        logger.info("starting training of model")
+
+        # define the generators for the training and test datasets
+        training_generator = DataGenerator(training, training_index, training_length, **paramaters)
+        test_generator     = DataGenerator(testing, testing_index, testing_length, **paramaters)
+        logger.info(psutil.virtual_memory())
+
+        # callbacks during training
+        save           = ModelCheckpoint('%s.h5' % self.model_name, monitor='val_acc', save_best_only=True)
+        early_stopping = EarlyStopping(monitor='val_acc', patience=5)
+
+        # train network
+        self.history = self.model.fit_generator(generator=training_generator,
+                                 validation_data=test_generator,
+                                 epochs=self.epochs, 
+                                 callbacks=[save, early_stopping],
+                                 steps_per_epoch=(training_length // self.batch_size),
+                                 validation_steps=(testing_length // self.batch_size),
+                                 use_multiprocessing=True,
+                                 workers=2,
+                                 max_queue_size=2,
+                                 verbose=1).history
+
+        # save the history variable
+        with s3.open('%s/%s.pkl' % (self.bucket, self.history_pkl), 'wb') as f:
+            pickle.dump(self.history, f)
+        
+        # save the model in an S3 bucket
+        self.model.save('%s.h5' % self.model_name)
+        with open('%s.h5' % self.model_name, "rb") as f:
+            client.upload_fileobj(Fileobj=f, 
+                                  Bucket=self.bucket, 
+                                  Key='%s.h5' % self.model_name)
+
+
+        logger.info("finished training model")
+
+
 
 
 

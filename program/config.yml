@@ -1,9 +1,12 @@
 model:
-  name        : blstm
-  epochs      : 100
-  batch_size  : 128
-  hidden_units: 100
+  name         : blstm
+  epochs       : 100
+  batch_size   : 128
+  hidden_units : 100
 
 S3:
-  bucket_name   : blstm_cracker
-  tokenizer_name: s3_tokenizer
+  bucket_name    : blstm_cracker
+  tokenizer_name : s3_tokenizer
+  training_params: training_params
+  data_path      : cleartext_passwords.csv
+  history_pkl    : history
