@@ -26,13 +26,13 @@ This is the basic flow of the code:
     1) determine number of characters
     2) determine/define longest sequence length
 3) generator
-    3.1) tokenization
-    3.2) sliding windows
+    1) tokenization
+    2) sliding windows
 4) training
 5) sequence
-    5.1) for i in sequence, predict most likely candidates in each position
-    5.2) calculate most likely shared candidates
-    5.3) calculate probabilities of overall adjusted sequences
+    1) for i in sequence, predict most likely candidates in each position
+    2) calculate most likely shared candidates
+    3) calculate probabilities of overall adjusted sequences
 
 Attributes
 ----------
