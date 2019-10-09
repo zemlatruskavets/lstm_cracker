@@ -1,0 +1,9 @@
+model:
+  name        : blstm
+  epochs      : 100
+  batch_size  : 128
+  hidden_units: 100
+
+S3:
+  bucket_name   : blstm_cracker
+  tokenizer_name: s3_tokenizer

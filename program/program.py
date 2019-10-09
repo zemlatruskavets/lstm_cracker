@@ -18,6 +18,9 @@ Notes
     The dataset is assumed to contain no information other than the 
     cleartext passwords.
 
+    The network parameters (e.g., number of hidden units, embedding
+    layer, etc.) are defined in the configuration file (config.yml).
+
     This is the basic flow of the code:
 
     1) read in data
@@ -37,8 +40,8 @@ Notes
 Attributes
 ----------
 s3 : str
-    This variable holds connection information and allows typical file-system style
-    commands to interact with files stored in an S3 bucket.
+    This variable holds connection information and allows typical file-system 
+    style operations to interact with files stored in an S3 bucket.
 
 variables : dict
     This dictionary holds the configuration variables defined in config.yml
@@ -50,11 +53,11 @@ variables : dict
 
 
 
-#####################################################################################
+################################################################################
 
-##                                 IMPORT MODULES                                  ##
+##                              IMPORT MODULES                                ##
 
-#####################################################################################
+################################################################################
 
 
 from generator                    import DataGenerator
@@ -106,6 +109,32 @@ with open("config.yml", 'r') as config:
 
 
 class LSTM_network():
+    """
+    Exceptions are documented in the same way as classes.
+
+    The __init__ method may be documented in either the class level
+    docstring, or as a docstring on the __init__ method itself.
+
+    Either form is acceptable, but the two should not be mixed. Choose one
+    convention to document the __init__ method and be consistent with it.
+
+    Note
+    ----
+    Do not include the `self` parameter in the ``Parameters`` section.
+
+    Parameters
+    ----------
+    msg : str
+        Human readable string describing the exception.
+    code : :obj:`int`, optional
+        Numeric error code.
+
+    Attributes
+    ----------
+    data_path : str
+        Path to dataset.
+
+    """
 
     def __init__():
         # variables
