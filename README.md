@@ -16,7 +16,7 @@ The dataset is assumed to contain no information other than the
 cleartext passwords.
 
 The network parameters (e.g., number of hidden units, embedding
-layer, etc.) are defined in the configuration file (config.yml).
+layer, etc.) are defined in the configuration file (`config.yml`).
 
 This is the basic flow of the code:
 
