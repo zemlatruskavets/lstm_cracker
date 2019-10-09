@@ -44,7 +44,7 @@ s3 : str
     style operations to interact with files stored in an S3 bucket.
 
 variables : dict
-    This dictionary holds the configuration variables defined in config.yml
+    This dictionary holds the configuration variables defined in config.yml.
     
 
 """
