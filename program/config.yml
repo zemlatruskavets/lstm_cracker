@@ -5,8 +5,8 @@ model:
   hidden_units : 100
 
 S3:
-  bucket_name    : blstm_cracker
-  tokenizer_name : s3_tokenizer
-  training_params: training_params
-  data_path      : cleartext_passwords.csv
-  history_pkl    : history
+  bucket_name     : blstm_cracker
+  tokenizer_name  : s3_tokenizer
+  training_params : training_params
+  data_path       : cleartext_passwords.csv
+  history_pkl     : history

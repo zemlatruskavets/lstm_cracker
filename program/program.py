@@ -15,7 +15,7 @@ Example
 
 Notes
 -----
-    The dataset is assumed to contain no information other than the 
+    The dataset is assumed to contain two columns: the usernames and the 
     cleartext passwords.
 
     The network parameters (e.g., number of hidden units, embedding
@@ -47,6 +47,11 @@ variables : dict
     This dictionary holds the configuration variables defined in config.yml.
     
 
+To do
+-----
+1) Put the parts saving data to S3 into a single function and invoke that
+
+
 """
 
 
@@ -60,13 +65,30 @@ variables : dict
 ################################################################################
 
 
-from generator                    import DataGenerator
+import dask.dataframe as dd
+import dateutil.parser as dp
+import gc
+import json
+import multiprocessing
+import numpy  as np
+import pandas as pd
+import pickle
+import psutil
+import random
+import s3fs
+import settings
+import sys
+import uuid
+import yaml
+
+
 from dask.diagnostics             import ProgressBar
 from dask.multiprocessing         import get
 from datetime                     import datetime, time, timedelta
 from concurrent.futures           import ProcessPoolExecutor
 from concurrent.futures           import ThreadPoolExecutor
 from functools                    import partial
+from generator                    import DataGenerator
 from keras.callbacks              import ModelCheckpoint, EarlyStopping
 from keras.layers                 import Embedding, LSTM, Dense
 from keras.models                 import Sequential, load_model
@@ -77,23 +99,6 @@ from pympler.asizeof              import asizeof
 from sklearn.model_selection      import train_test_split
 from statistics                   import median
 from tqdm                         import tqdm
-
-
-import dask.dataframe as dd
-import dateutil.parser as dp
-import gc
-import json
-import pickle
-import multiprocessing
-import numpy  as np
-import pandas as pd
-import psutil
-import random
-import s3fs
-import settings
-import sys
-import uuid
-import yaml
 
 
 
@@ -154,7 +159,7 @@ class LSTM_network():
 
     def data_load(self, ):
         """
-        Load the data.
+        Load the data from some remote location.
 
 
         Parameters
@@ -257,7 +262,7 @@ class LSTM_network():
 
 
 
-    def model_construction(self, ):
+    def model_construction(self):
         """
         Construct the model.
 
@@ -271,8 +276,8 @@ class LSTM_network():
 
         Returns
         -------
-        float
-            True if successful, False otherwise.
+        parameters : dict
+            A dictionary containing various information about the training.
 
         """
 
@@ -292,6 +297,9 @@ class LSTM_network():
         self.model.compile('rmsprop', 'categorical_crossentropy')
 
         logger.info(self.model.summary())
+
+
+        return parameters
 
 
 
@@ -372,25 +380,25 @@ class LSTM_network():
 
 
 
-    def sequence_probability(self, sequence):
+    def password_probability(self, password):
         """
-        Calculate the probability of a given sequence.
+        Calculate the probability of a given password.
 
 
         Parameters
         ----------
-        sequence
-            The sequence whose probability is to be calculated.
+        password
+            The password whose probability is to be calculated.
 
         Returns
         -------
         float
-            The probability of the sequence.
+            The probability of the password.
 
         """
 
-        # tokenize the sentence
-        token  = self.tokenizer.texts_to_sequences([sentence])[0]
+        # tokenize the password
+        token  = self.tokenizer.texts_to_sequences([password])[0]
         x_test = self.slide_window(token)
         x_test = np.array(x_test)
         y_test = token - 1
@@ -398,20 +406,20 @@ class LSTM_network():
         # determine the probabilities of the permutations of the words
         probabilities = self.model.predict(x_test, verbose=0)
 
-        # calculate the probability of the sentence
-        sequence_probability = 0
+        # calculate the probability of the password
+        password_probability = 0
         for index, probability in enumerate(probabilities):
             word                  = self.ix_to_word[y_test[index] + 1]  # the first element is <PAD>
             word_probability      = probability[y_test[index]]          # get the probability from the model
-            sequence_probability += np.log(word_probability)            # use log to avoid roundoff errors
+            password_probability += np.log(word_probability)            # use log to avoid roundoff errors
 
-        # calculate the perplexity to account for varying sequence lengths
-        sentence_length       = len(sentence)    
-        sequence_probability /= -sentence_length
-        sentence_probability  = np.exp(sequence_probability)  # recover the raw probability
+        # calculate the perplexity to account for varying password lengths
+        password_length       = len(password)    
+        password_probability /= -password_length
+        password_probability  = np.exp(password_probability)  # recover the raw probability
 
 
-        return sentence_probability
+        return password_probability
 
 
 
