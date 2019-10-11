@@ -137,6 +137,8 @@ class LSTM_network():
     """
 
     def __init__(self, ):
+
+        # load variables from the config file
         self.epochs          = variables['model']['epochs']
         self.batch_size      = variables['model']['batch_size']
         self.hidden_units    = variables['model']['hidden_units']
@@ -171,8 +173,10 @@ class LSTM_network():
 
 
         # read the dataset from the S3 bucket and store it as a dask dataframe
-        with s3.open('%s/%s.parquet' % (self.bucket, self.data_path), 'rb') as f:
-            self.data = dd.read_parquet(f)
+        # with s3.open('%s/%s.parquet' % (self.bucket, self.data_path), 'rb') as f:
+        #     self.data = dd.read_parquet(f)
+
+        self.data = pd.read_csv('../data/dump.csv')
 
         # drop the rows with NaN values 
         self.data = self.data.dropna()
@@ -183,10 +187,9 @@ class LSTM_network():
 
 
 
-
     def parse_data(self, ):
         """
-        Parse the data.
+        Parse the data and determine some dataset properties.
 
 
         Parameters
@@ -203,17 +206,20 @@ class LSTM_network():
 
         """
 
-
-        self.unique_characters = sorted(list(set(''.join(self.data['sequences']))))
+        self.data_length       = len(self.data)
+        self.unique_characters = sorted(list(set(''.join(self.data['Password']))))
         self.vocabulary_size   = len(self.unique_characters)
+        self.max_length        = self.data['Password'].str.len().max()
 
 
 
 
-    def tokenization(self, )
+
+
+    def tokenization(self)
 
         # get the sequence column as its own array
-        sequences = self.data['sequences']
+        sequences = self.data['Password']
 
         # define the tokenizer 
         self.tokenizer = Tokenizer(num_words=None, oov_token='UNK', char_level=True)
@@ -222,10 +228,10 @@ class LSTM_network():
         self.tokenizer.fit_on_texts(sequences)
 
         # generate the word-to-index dictionary 
-        self.word_to_ix = self.tokenizer.word_index
+        self.character_to_ix = self.tokenizer.word_index
 
-        # generate the index-to-word dictionary too
-        self.ix_to_word = {i: j for j, i in self.word_to_ix.items()}
+        # generate the index-to-character dictionary too
+        self.ix_to_character = {i: j for j, i in self.character_to_ix.items()}
 
         # persist the tokenizer
         with s3.open('%s/%s' % (self.bucket, self.tokenizer_name), 'w') as f:
@@ -233,19 +239,19 @@ class LSTM_network():
 
         # save the index-to-word dictionary and self.vocabulary_size values
         with s3.open('%s/%s' % (self.bucket, self.training_params), 'wb') as f:
-            pickle.dump([self.ix_to_word, self.self.vocabulary_size], f)
+            pickle.dump([self.ix_to_character, self.self.vocabulary_size, self.max_length], f)
 
         # this encodes the sequences
         tokens = self.tokenizer.texts_to_sequences(sequences)
 
         # save the tokenized sequences in a column of the dataframe
-        self.data['tokenized'] = tokens
+        self.data['Tokenized'] = tokens
 
         # turn the tokenized column into a column of arrays (not lists)
-        self.data['tokenized'] = self.data['tokenized'].apply(lambda x: np.array(x))
+        self.data['Tokenized'] = self.data['Tokenized'].apply(lambda x: np.array(x))
 
         # this gets rid of the <PAD> character
-        self.data['outputs'] = self.data['tokenized'] - 1
+        self.data['Output'] = self.data['Tokenized'] - 1
 
 
 
@@ -333,16 +339,16 @@ class LSTM_network():
         logger.info(psutil.virtual_memory())
 
         # callbacks during training
-        save           = ModelCheckpoint('%s.h5' % self.model_name, monitor='val_acc', save_best_only=True)
-        early_stopping = EarlyStopping(monitor='val_acc', patience=5)
+        save_checkpoint = ModelCheckpoint('%s.h5' % self.model_name, monitor='val_acc', save_best_only=True)
+        early_stopping  = EarlyStopping(monitor='val_acc', patience=5)
 
         # train network
         self.history = self.model.fit_generator(generator=training_generator,
                                  validation_data=test_generator,
                                  epochs=self.epochs, 
-                                 callbacks=[save, early_stopping],
                                  steps_per_epoch=(training_length // self.batch_size),
                                  validation_steps=(testing_length // self.batch_size),
+                                 callbacks=[save_checkpoint, early_stopping],
                                  use_multiprocessing=True,
                                  workers=2,
                                  max_queue_size=2,
