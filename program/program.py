@@ -440,7 +440,7 @@ class LSTM_network():
 
         # tokenize the password
         token  = self.tokenizer.texts_to_sequences([password])[0]
-        x_test = self.slide_window(token)
+        x_test = DataGenerator.slide_window(token)
         x_test = np.array(x_test)
         y_test = token - 1
 
