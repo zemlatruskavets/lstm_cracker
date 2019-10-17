@@ -157,22 +157,21 @@ class LSTM_network():
 
 
 
-    def data_load(self, ):
+    def data_load(self, data_location):
         """
         Load the data from some remote location.
 
 
         Parameters
         ----------
-        param1
-            The first parameter.
-        param2
-            The second parameter.
+        data_location : str
+            The path to the password dataset.
+
 
         Returns
         -------
-        bool
-            True if successful, False otherwise.
+        data
+            The cleaned dataset containing all of the passwords.
 
         """
 
@@ -181,7 +180,7 @@ class LSTM_network():
         # with s3.open('%s/%s.parquet' % (self.bucket, self.data_path), 'rb') as f:
         #     self.data = dd.read_parquet(f)
 
-        self.data = pd.read_csv('../data/dump.csv')
+        self.data = pd.read_csv(data_location)
 
         # drop the rows with NaN values 
         self.data = self.data.dropna()
@@ -192,22 +191,26 @@ class LSTM_network():
 
 
 
-    def parse_data(self, ):
+    def parse_data(self):
         """
         Parse the data and determine some dataset properties.
 
 
         Parameters
         ----------
-        param1
-            The first parameter.
-        param2
-            The second parameter.
+        data
+            The cleaned dataset containing all of the passwords.
 
         Returns
         -------
-        None
-            all variables are class variables
+        data_length : int
+            The number of passwords in the dataset.
+        unique_characters : int
+            A sorted list of the unique characters in the dataset.
+        vocabulary_size : int
+            The number of unique characters in the dataset.
+        max_length : int
+            The length of the longest password in the dataset.
 
         """
 
@@ -221,16 +224,48 @@ class LSTM_network():
 
 
 
-    def tokenization(self)
+    def tokenization(self):
+        """
+        Parse the data and determine some dataset properties.
 
-        # get the sequence column as its own array
-        sequences = self.data['Password']
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            The dataset containing the passwords.
+        vocabulary_size : int
+            The number of unique characters in the dataset.
+        max_length : int
+            The length of the longest password.
+        bucket : str
+            The name of the S3 bucket in which the results are stored.
+        training_params : str
+            The name of the pickle object to store in S3.
+        tokenizer_name : str
+            The name of the tokenizer object to be store in S3.
+
+
+        Returns
+        -------
+        tokenizer : 
+            The Keras tokenizer object.
+        character_to_ix : 
+            The character-to-index dictionary.
+        ix_to_character : 
+            The index-to-character dictionary.
+        data : pd.DataFrame
+            The dataset, including the tokenized passwords.
+
+        """
+
+        # get the password column as its own array
+        passwords = self.data['Password']
 
         # define the tokenizer 
         self.tokenizer = Tokenizer(num_words=None, oov_token='UNK', char_level=True)
 
-        # generate the tokenized sequences      
-        self.tokenizer.fit_on_texts(sequences)
+        # generate the tokenized passwords      
+        self.tokenizer.fit_on_texts(passwords)
 
         # generate the character-to-index dictionary 
         self.character_to_ix = self.tokenizer.word_index
@@ -244,12 +279,12 @@ class LSTM_network():
 
         # save the index-to-character dictionary and self.vocabulary_size values
         with s3.open('%s/%s' % (self.bucket, self.training_params), 'wb') as f:
-            pickle.dump([self.ix_to_character, self.self.vocabulary_size, self.max_length], f)
+            pickle.dump([self.ix_to_character, self.vocabulary_size, self.max_length], f)
 
-        # this encodes the sequences
-        tokens = self.tokenizer.texts_to_sequences(sequences)
+        # this encodes the passwords
+        tokens = self.tokenizer.texts_to_sequences(passwords)
 
-        # save the tokenized sequences in a column of the dataframe
+        # save the tokenized passwords in a column of the dataframe
         self.data['Tokenized'] = tokens
 
         # turn the tokenized column into a column of arrays (not lists)
@@ -269,26 +304,26 @@ class LSTM_network():
 
         Parameters
         ----------
-        param1
-            The first parameter.
-        param2
-            The second parameter.
+        vocabulary_size
+            The number of unique characters in the dataset.
+        max_length
+            The length of the longest password.
 
-        Returns
+        Outputs
         -------
-        parameters : dict
-            A dictionary containing various information about the training.
+        model : 
+            The Keras model.
 
         """
 
 
         # build the model
         self.model = Sequential()
-        self.model.add(Embedding(input_dim=self.self.vocabulary_size + 1,             # vocabulary size plus an extra element for <PAD> 
-                                output_dim=int(self.self.vocabulary_size ** (1./4)),  # size of embeddings; fourth root of cardinality
-                                input_length=self.max_length - 1))                    # length of the padded sequences
-        self.model.add(Bidirectional(LSTM(50)))                                       # size of hidden layer; n_h ~= n_s / (2(n_i + n_o)) 
-        self.model.add(Dense(self.self.vocabulary_size, activation='softmax'))        # output
+        self.model.add(Embedding(input_dim=self.vocabulary_size + 1,             # vocabulary size plus an extra element for <PAD> 
+                                output_dim=int(self.vocabulary_size ** (1./4)),  # size of embeddings; fourth root of cardinality
+                                input_length=self.max_length - 1))               # length of the padded sequences
+        self.model.add(Bidirectional(LSTM(50)))                                  # size of hidden layer; n_h ~= n_s / (2(n_i + n_o)) 
+        self.model.add(Dense(self.vocabulary_size, activation='softmax'))        # output
         self.model.compile('rmsprop', 'categorical_crossentropy')
 
         logger.info(self.model.summary())
@@ -305,28 +340,45 @@ class LSTM_network():
 
         Parameters
         ----------
-        param1
-            The first parameter.
-        param2
-            The second parameter.
+        data : pd.DataFrame
+            The dataset containing the passwords.
+        vocabulary_size : int
+            The number of unique characters in the dataset.
+        max_length : int
+            The length of the longest password.
+        batch_size : int
+            The number of samples to train during a single iteration.
+        epoch_size : int
+            The number of steps to train the model.
+        model : 
+            The Keras model created in model_construction.
+        bucket : str
+            The name of the S3 bucket in which the results are stored.
+        history_pkl : str
+            The name of the pickle object to store in S3.
+        model_name : str
+            The name of the model to be store in S3.
+
 
         Returns
         -------
-        None
+        history : 
+            The Keras history object.
+
 
         """
 
         # define the generator parameters
-        paramaters = {'self.vocabulary_size': self.self.vocabulary_size,
+        paramaters = {'self.vocabulary_size': self.vocabulary_size,
                       'max_length':           self.max_length,
                       'batch_size':           self.batch_size,
                       'shuffle':              True}
 
         # split the data into training and testing sets
         training, testing = train_test_split(self.data, test_size=0.1)
-
+ 
         # check memory
-        logger.info("These are the memory stats prior to training: %s" % psutil.virtual_memory())
+        logger.info("these are the memory stats prior to training: %s" % psutil.virtual_memory())
 
         logger.info("starting training of model")
 
@@ -343,8 +395,8 @@ class LSTM_network():
         self.history = self.model.fit_generator(generator=training_generator,
                                  validation_data=test_generator,
                                  epochs=self.epochs, 
-                                 steps_per_epoch=(training_length // self.batch_size),
-                                 validation_steps=(testing_length // self.batch_size),
+                                 steps_per_epoch=(len(training) // self.batch_size),
+                                 validation_steps=(len(testing) // self.batch_size),
                                  callbacks=[save_checkpoint, early_stopping],
                                  use_multiprocessing=True,
                                  workers=2,

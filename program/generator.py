@@ -16,13 +16,13 @@ logger = settings.logger
 class DataGenerator(keras.utils.Sequence):
     """ Generates data for Keras """
     
-    def __init__(self, data, vocab_length, max_length, batch_size, shuffle):
+    def __init__(self, data, vocabulary_size, max_length, batch_size, shuffle):
         """ Load the parameters """
-        self.data         = data
-        self.vocab_length = vocab_length
-        self.max_length   = max_length
-        self.batch_size   = batch_size
-        self.shuffle      = shuffle
+        self.data            = data
+        self.vocabulary_size = vocabulary_size
+        self.max_length      = max_length
+        self.batch_size      = batch_size
+        self.shuffle         = shuffle
         self.on_epoch_end()
 
         # determine some of the dataset properties
@@ -100,7 +100,7 @@ class DataGenerator(keras.utils.Sequence):
         X = np.vstack(X.to_numpy())
 
         # generate the one-hot encoding of the output column
-        y = data_subset[output_column].apply(lambda x: np.eye(self.vocab_length)[x])
+        y = data_subset[output_column].apply(lambda x: np.eye(self.vocabulary_size)[x])
 
         # change lists to arrays
         y = y.apply(lambda x: np.array(x))
