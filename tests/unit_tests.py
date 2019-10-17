@@ -19,6 +19,8 @@ class DataTest(unittest.TestCase):
 
 	def data_format(self):
 		""" Ensure that the dataframe has the right format """
+		
+		# data should have username and password columns
 		self.assertEqual(fun(3), 4)
 
 	def data_format(self):

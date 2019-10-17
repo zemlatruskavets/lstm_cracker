@@ -186,7 +186,7 @@ class LSTM_network():
         # drop the rows with NaN values 
         self.data = self.data.dropna()
 
-        # get rid of duplicate logs
+        # get rid of duplicate rows
         self.data = self.data.drop_duplicates()
 
 
@@ -206,8 +206,8 @@ class LSTM_network():
 
         Returns
         -------
-        bool
-            True if successful, False otherwise.
+        None
+            all variables are class variables
 
         """
 
@@ -232,7 +232,7 @@ class LSTM_network():
         # generate the tokenized sequences      
         self.tokenizer.fit_on_texts(sequences)
 
-        # generate the word-to-index dictionary 
+        # generate the character-to-index dictionary 
         self.character_to_ix = self.tokenizer.word_index
 
         # generate the index-to-character dictionary too
@@ -242,7 +242,7 @@ class LSTM_network():
         with s3.open('%s/%s' % (self.bucket, self.tokenizer_name), 'w') as f:
             f.write(json.dumps(self.tokenizer.to_json(), ensure_ascii=False))
 
-        # save the index-to-word dictionary and self.vocabulary_size values
+        # save the index-to-character dictionary and self.vocabulary_size values
         with s3.open('%s/%s' % (self.bucket, self.training_params), 'wb') as f:
             pickle.dump([self.ix_to_character, self.self.vocabulary_size, self.max_length], f)
 
@@ -281,11 +281,6 @@ class LSTM_network():
 
         """
 
-        # define the generator parameters
-        paramaters = {'self.vocabulary_size': self.self.vocabulary_size,
-                      'max_length':           self.max_length,
-                      'batch_size':           self.batch_size,
-                      'shuffle':              True}
 
         # build the model
         self.model = Sequential()
@@ -297,9 +292,6 @@ class LSTM_network():
         self.model.compile('rmsprop', 'categorical_crossentropy')
 
         logger.info(self.model.summary())
-
-
-        return parameters
 
 
 
@@ -324,26 +316,23 @@ class LSTM_network():
 
         """
 
+        # define the generator parameters
+        paramaters = {'self.vocabulary_size': self.self.vocabulary_size,
+                      'max_length':           self.max_length,
+                      'batch_size':           self.batch_size,
+                      'shuffle':              True}
+
         # split the data into training and testing sets
         training, testing = train_test_split(self.data, test_size=0.1)
 
-        # determine some of the dataset properties
-        training_index  = training.index.to_numpy()
-        testing_index   = testing.index.to_numpy()
-        training_length = len(training_index)
-        testing_length  = len(testing_index)
-
-        logger.info('finished getting data properties')
-
         # check memory
-        logger.info(psutil.virtual_memory())
-
+        logger.info("These are the memory stats prior to training: %s" % psutil.virtual_memory())
 
         logger.info("starting training of model")
 
         # define the generators for the training and test datasets
-        training_generator = DataGenerator(training, training_index, training_length, **paramaters)
-        test_generator     = DataGenerator(testing, testing_index, testing_length, **paramaters)
+        training_generator = DataGenerator(training, **paramaters)
+        test_generator     = DataGenerator(testing, **paramaters)
         logger.info(psutil.virtual_memory())
 
         # callbacks during training
