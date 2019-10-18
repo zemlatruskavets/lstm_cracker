@@ -21,16 +21,16 @@ class DataGenerator(keras.utils.Sequence):
         self.max_length      = max_length
         self.batch_size      = batch_size
         self.shuffle         = shuffle
-        # self.on_epoch_end()
 
         # determine some of the dataset properties
         self.index_array = self.data.index.values
         self.data_length = len(self.data)
+        self.on_epoch_end()
 
 
 
     def __len__(self):
-        """ Denotes the number of batches per epoch """
+        """ Determines the number of batches per epoch """
         
         return int(np.ceil(self.data_length / self.batch_size))
 
@@ -57,11 +57,11 @@ class DataGenerator(keras.utils.Sequence):
 
 
 
-    # def on_epoch_end(self):
-    #     """ shuffles indices after each epoch """
+    def on_epoch_end(self):
+        """ shuffles indices after each epoch """
         
-    #     if self.shuffle == True:
-    #         np.random.shuffle(self.index_array)
+        if self.shuffle == True:
+            np.random.shuffle(self.index_array)
 
 
 

@@ -186,6 +186,9 @@ class LSTM_network():
         # get rid of duplicate rows
         self.data = self.data.drop_duplicates()
 
+        # just keep some of the data
+        self.data = self.data.head(1000)
+
 
 
 
@@ -324,7 +327,7 @@ class LSTM_network():
         self.model.add(Dense(self.vocabulary_size, activation='softmax'))        # output
         self.model.compile('rmsprop', 'categorical_crossentropy')
 
-        # logger.info(self.model.summary())
+        print(self.model.summary())
 
 
 
@@ -376,18 +379,19 @@ class LSTM_network():
         training, testing = train_test_split(self.data, test_size=0.1)
  
         # check memory
-        # logger.info("these are the memory stats prior to training: %s" % psutil.virtual_memory())
+        print("these are the memory stats prior to training: ")
+        print(psutil.virtual_memory())
 
-        # logger.info("starting training of model")
+        print("starting training of model")
 
         # define the generators for the training and test datasets
         training_generator = DataGenerator(training, **paramaters)
         test_generator     = DataGenerator(testing, **paramaters)
-        # logger.info(psutil.virtual_memory())
+        print(psutil.virtual_memory())
 
         # callbacks during training
         save_checkpoint = ModelCheckpoint('%s.h5' % self.model_name, monitor='val_acc', save_best_only=True)
-        early_stopping  = EarlyStopping(monitor='val_acc', patience=5)
+        early_stopping  = EarlyStopping(monitor='loss', patience=5)
 
         # train network
         self.history = self.model.fit_generator(generator=training_generator,
@@ -397,8 +401,8 @@ class LSTM_network():
                                  validation_steps=(len(testing) // self.batch_size),
                                  callbacks=[save_checkpoint, early_stopping],
                                  use_multiprocessing=True,
-                                 workers=2,
-                                 max_queue_size=2,
+                                 workers=multiprocessing.cpu_count(),
+                                 max_queue_size=multiprocessing.cpu_count()*2,
                                  verbose=1).history
 
         # save the history variable
@@ -406,14 +410,14 @@ class LSTM_network():
         #     pickle.dump(self.history, f)
         
         # save the model in an S3 bucket
-        # self.model.save('%s.h5' % self.model_name)
+        self.model.save('%s.h5' % self.model_name)
         # with open('%s.h5' % self.model_name, "rb") as f:
         #     client.upload_fileobj(Fileobj=f, 
         #                           Bucket=self.bucket, 
         #                           Key='%s.h5' % self.model_name)
 
 
-        logger.info("finished training model")
+        print("finished training model")
 
 
 
@@ -433,7 +437,7 @@ class LSTM_network():
         tokenizer : 
             The Keras tokenizer object.
         ix_to_character : 
-            The index-to-character dictionary.
+            The c-to-character dictionary.
         data : pd.DataFrame
             The dataset, including the tokenized passwords.
 
@@ -519,9 +523,6 @@ def main():
     # train the model
     l.model_training()
 
-    print(l.data)
-
-    print(l.unique_characters)
 
 
 
