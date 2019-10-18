@@ -21,10 +21,10 @@ class DataGenerator(keras.utils.Sequence):
         self.max_length      = max_length
         self.batch_size      = batch_size
         self.shuffle         = shuffle
-        self.on_epoch_end()
+        # self.on_epoch_end()
 
         # determine some of the dataset properties
-        self.index_array = self.data.index.to_numpy()
+        self.index_array = self.data.index.values
         self.data_length = len(self.data)
 
 
@@ -57,11 +57,11 @@ class DataGenerator(keras.utils.Sequence):
 
 
 
-    def on_epoch_end(self):
-        """ shuffles indices after each epoch """
+    # def on_epoch_end(self):
+    #     """ shuffles indices after each epoch """
         
-        if self.shuffle == True:
-            np.random.shuffle(self.index_array)
+    #     if self.shuffle == True:
+    #         np.random.shuffle(self.index_array)
 
 
 
@@ -95,7 +95,7 @@ class DataGenerator(keras.utils.Sequence):
         X = X.apply(lambda x: np.array(x))
 
         # stack the arrays
-        X = np.vstack(X.to_numpy())
+        X = np.vstack(X.values)
 
         # generate the one-hot encoding of the output column
         y = data_subset[output_column].apply(lambda x: np.eye(self.vocabulary_size)[x])
@@ -104,7 +104,7 @@ class DataGenerator(keras.utils.Sequence):
         y = y.apply(lambda x: np.array(x))
 
         # stack the arrays
-        y = np.vstack(y.to_numpy())
+        y = np.vstack(y.values)
 
         # remove from memory
         del data_subset

@@ -89,7 +89,7 @@ from concurrent.futures           import ThreadPoolExecutor
 from functools                    import partial
 from generator                    import DataGenerator
 from keras.callbacks              import ModelCheckpoint, EarlyStopping
-from keras.layers                 import Embedding, LSTM, Dense
+from keras.layers                 import Embedding, LSTM, Dense, Bidirectional
 from keras.models                 import Sequential, load_model
 from keras.preprocessing.text     import Tokenizer, tokenizer_from_json
 from keras.preprocessing.sequence import pad_sequences
@@ -324,7 +324,7 @@ class LSTM_network():
         self.model.add(Dense(self.vocabulary_size, activation='softmax'))        # output
         self.model.compile('rmsprop', 'categorical_crossentropy')
 
-        logger.info(self.model.summary())
+        # logger.info(self.model.summary())
 
 
 
@@ -367,23 +367,23 @@ class LSTM_network():
         """
 
         # define the generator parameters
-        paramaters = {'self.vocabulary_size': self.vocabulary_size,
-                      'max_length':           self.max_length,
-                      'batch_size':           self.batch_size,
-                      'shuffle':              True}
+        paramaters = {'vocabulary_size': self.vocabulary_size,
+                      'max_length':      self.max_length,
+                      'batch_size':      self.batch_size,
+                      'shuffle':         True}
 
         # split the data into training and testing sets
         training, testing = train_test_split(self.data, test_size=0.1)
  
         # check memory
-        logger.info("these are the memory stats prior to training: %s" % psutil.virtual_memory())
+        # logger.info("these are the memory stats prior to training: %s" % psutil.virtual_memory())
 
-        logger.info("starting training of model")
+        # logger.info("starting training of model")
 
         # define the generators for the training and test datasets
         training_generator = DataGenerator(training, **paramaters)
         test_generator     = DataGenerator(testing, **paramaters)
-        logger.info(psutil.virtual_memory())
+        # logger.info(psutil.virtual_memory())
 
         # callbacks during training
         save_checkpoint = ModelCheckpoint('%s.h5' % self.model_name, monitor='val_acc', save_best_only=True)
@@ -508,7 +508,20 @@ def main():
     l.data_load('../data/Users.csv')
 
     # get the dataset characteristics
-    
+    l.parse_data()    
+
+    # tokenize the data
+    l.tokenization()
+
+    # initialize the model
+    l.model_construction()
+
+    # train the model
+    l.model_training()
+
+    print(l.data)
+
+    print(l.unique_characters)
 
 
 
