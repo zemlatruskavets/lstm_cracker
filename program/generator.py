@@ -4,11 +4,9 @@ import keras
 import numpy as np
 import pandas as pd
 import psutil
-import settings
 from keras.preprocessing.sequence import pad_sequences
 
 
-logger = settings.logger
 
 
 

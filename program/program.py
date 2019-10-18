@@ -76,7 +76,6 @@ import pickle
 import psutil
 import random
 import s3fs
-import settings
 import sys
 import uuid
 import yaml
@@ -141,7 +140,7 @@ class LSTM_network():
 
     """
 
-    def __init__(self, ):
+    def __init__(self):
 
         # load variables from the config file
         self.epochs          = variables['model']['epochs']
@@ -153,6 +152,7 @@ class LSTM_network():
         self.tokenizer_name  = variables['S3']['tokenizer_name']
         self.training_params = variables['S3']['training_params']
         self.history_pkl     = variables['S3']['history_pkl']
+        self.data_path       = variables['data']['path']
 
 
 
@@ -272,12 +272,12 @@ class LSTM_network():
         self.ix_to_character = {i: j for j, i in self.character_to_ix.items()}
 
         # persist the tokenizer
-        with s3.open('%s/%s' % (self.bucket, self.tokenizer_name), 'w') as f:
-            f.write(json.dumps(self.tokenizer.to_json(), ensure_ascii=False))
+        # with s3.open('%s/%s' % (self.bucket, self.tokenizer_name), 'w') as f:
+        #     f.write(json.dumps(self.tokenizer.to_json(), ensure_ascii=False))
 
         # save the index-to-character dictionary and self.vocabulary_size values
-        with s3.open('%s/%s' % (self.bucket, self.training_params), 'wb') as f:
-            pickle.dump([self.ix_to_character, self.vocabulary_size, self.max_length], f)
+        # with s3.open('%s/%s' % (self.bucket, self.training_params), 'wb') as f:
+        #     pickle.dump([self.ix_to_character, self.vocabulary_size, self.max_length], f)
 
         # this encodes the passwords
         tokens = self.tokenizer.texts_to_sequences(passwords)
@@ -331,7 +331,7 @@ class LSTM_network():
 
 
 
-    def model_training(self, ):
+    def model_training(self):
         """
         Train the model.
 
@@ -402,15 +402,15 @@ class LSTM_network():
                                  verbose=1).history
 
         # save the history variable
-        with s3.open('%s/%s.pkl' % (self.bucket, self.history_pkl), 'wb') as f:
-            pickle.dump(self.history, f)
+        # with s3.open('%s/%s.pkl' % (self.bucket, self.history_pkl), 'wb') as f:
+        #     pickle.dump(self.history, f)
         
         # save the model in an S3 bucket
-        self.model.save('%s.h5' % self.model_name)
-        with open('%s.h5' % self.model_name, "rb") as f:
-            client.upload_fileobj(Fileobj=f, 
-                                  Bucket=self.bucket, 
-                                  Key='%s.h5' % self.model_name)
+        # self.model.save('%s.h5' % self.model_name)
+        # with open('%s.h5' % self.model_name, "rb") as f:
+        #     client.upload_fileobj(Fileobj=f, 
+        #                           Bucket=self.bucket, 
+        #                           Key='%s.h5' % self.model_name)
 
 
         logger.info("finished training model")
@@ -501,7 +501,14 @@ class LSTM_network():
 
 def main():
 
+    # instantiate the class
+    l = LSTM_network()
 
+    # load the data
+    l.data_load('../data/Users.csv')
+
+    # get the dataset characteristics
+    
 
 
 

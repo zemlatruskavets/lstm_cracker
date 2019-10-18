@@ -10,3 +10,6 @@ S3:
   training_params : training_params
   data_path       : cleartext_passwords.csv
   history_pkl     : history
+
+data:
+  path: '../data/dump.csv'
