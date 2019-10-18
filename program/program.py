@@ -50,7 +50,7 @@ variables : dict
 To do
 -----
 1) Put the parts saving data to S3 into a single function and invoke that
-
+2) Think through the guessing code.
 
 """
 
@@ -161,12 +161,10 @@ class LSTM_network():
         """
         Load the data from some remote location.
 
-
         Parameters
         ----------
         data_location : str
             The path to the password dataset.
-
 
         Returns
         -------
@@ -428,8 +426,16 @@ class LSTM_network():
 
         Parameters
         ----------
-        password
+        password : str
             The password whose probability is to be calculated.
+        model : 
+            The Keras model.
+        tokenizer : 
+            The Keras tokenizer object.
+        ix_to_character : 
+            The index-to-character dictionary.
+        data : pd.DataFrame
+            The dataset, including the tokenized passwords.
 
         Returns
         -------
@@ -450,9 +456,9 @@ class LSTM_network():
         # calculate the probability of the password
         password_probability = 0
         for index, probability in enumerate(probabilities):
-            word                  = self.ix_to_word[y_test[index] + 1]  # the first element is <PAD>
-            word_probability      = probability[y_test[index]]          # get the probability from the model
-            password_probability += np.log(word_probability)            # use log to avoid roundoff errors
+            word                  = self.ix_to_character[y_test[index] + 1]  # the first element is <PAD>
+            word_probability      = probability[y_test[index]]               # get the probability from the model
+            password_probability += np.log(word_probability)                 # use log to avoid roundoff errors
 
         # calculate the perplexity to account for varying password lengths
         password_length       = len(password)    
@@ -490,5 +496,16 @@ class LSTM_network():
 
         """
 
+
+
+
+def main():
+
+
+
+
+
+if __name__ == "__main__":
+    main()
 
 
