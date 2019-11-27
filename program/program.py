@@ -90,7 +90,7 @@ from generator                    import DataGenerator
 from keras.callbacks              import ModelCheckpoint, EarlyStopping
 from keras.layers                 import Embedding, LSTM, Dense, Bidirectional
 from keras.models                 import Sequential, load_model
-from keras.preprocessing.text     import Tokenizer, tokenizer_from_json
+# from keras.preprocessing.text     import Tokenizer, tokenizer_from_json
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils                  import to_categorical
 from pympler.asizeof              import asizeof
