@@ -122,7 +122,6 @@ timeloop==1.0.2
 tldextract==2.2.0
 toml==0.10.0
 toolz==0.10.0
-torch==1.1.0.post2
 tornado==5.1.1
 tqdm==4.30.0
 traitlets==4.3.2
