@@ -96,7 +96,7 @@ from keras.utils                  import to_categorical
 # from pympler.asizeof              import asizeof
 from sklearn.model_selection      import train_test_split
 from statistics                   import median
-from tqdm                         import tqdm
+# from tqdm                         import tqdm
 
 
 
