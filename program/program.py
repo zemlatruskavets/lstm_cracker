@@ -540,7 +540,6 @@ def main():
 
     # # train the model
     # l.model_training()
-    print(os.environ['SM_CHANNEL_TRAINING'])
     print('hello')
 
 
