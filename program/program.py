@@ -65,6 +65,7 @@ To do
 ################################################################################
 
 
+import argparse
 import dateutil.parser as dp
 import gc
 import json
@@ -154,6 +155,14 @@ class LSTM_network():
         self.data_path       = variables['data']['path']
 
 
+        parser = argparse.ArgumentParser()
+
+        parser.add_argument('--epochs', type=int, default=10)
+        
+        args, _ = parser.parse_known_args()
+        
+        self.epochs     = args.epochs
+        
 
 
     def data_load(self, data_location):
