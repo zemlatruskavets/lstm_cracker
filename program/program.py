@@ -525,7 +525,7 @@ def main():
 
     print(l.training_dir)
     print(type(l.training_dir))
-    print(os.path.join(l.training_dir, 'train.csv'))
+    # print(os.path.join(l.training_dir, 'train.csv'))
     # # load the data
     # l.data_load(os.path.join(l.training_dir, 'train.csv'))
 
