@@ -502,7 +502,7 @@ class LSTM_network():
 
 
 
-
+# run the program
 def main():
 
     # instantiate the class
