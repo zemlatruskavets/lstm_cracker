@@ -159,12 +159,12 @@ class LSTM_network():
         parser = argparse.ArgumentParser()
 
         parser.add_argument('--epochs', type=int, default=10)
-        # parser.add_argument('--training', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
+        parser.add_argument('--training', type=str)
         
         args, _ = parser.parse_known_args()
         
         self.epochs       = args.epochs
-        # self.training_dir = args.training
+        self.training_dir = args.training
         
 
 
