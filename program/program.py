@@ -159,10 +159,12 @@ class LSTM_network():
         parser = argparse.ArgumentParser()
 
         parser.add_argument('--epochs', type=int, default=10)
+        parser.add_argument('--training', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
         
         args, _ = parser.parse_known_args()
         
-        self.epochs     = args.epochs
+        self.epochs       = args.epochs
+        self.training_dir = args.training
         
 
 
@@ -522,7 +524,7 @@ def main():
     l = LSTM_network()
 
     # # load the data
-    # l.data_load('../data/Users.csv')
+    l.data_load('s3://blstm-cracker/test-run/train/train.csv')
 
     # # get the dataset characteristics
     # l.parse_data()    
