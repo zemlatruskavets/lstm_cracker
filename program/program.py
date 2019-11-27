@@ -93,7 +93,7 @@ from keras.models                 import Sequential, load_model
 # from keras.preprocessing.text     import Tokenizer, tokenizer_from_json
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils                  import to_categorical
-from pympler.asizeof              import asizeof
+# from pympler.asizeof              import asizeof
 from sklearn.model_selection      import train_test_split
 from statistics                   import median
 from tqdm                         import tqdm
