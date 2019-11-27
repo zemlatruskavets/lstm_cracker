@@ -508,24 +508,24 @@ class LSTM_network():
 # run the program
 def main():
 
-    # instantiate the class
-    l = LSTM_network()
+    # # instantiate the class
+    # l = LSTM_network()
 
-    # load the data
-    l.data_load('../data/Users.csv')
+    # # load the data
+    # l.data_load('../data/Users.csv')
 
-    # get the dataset characteristics
-    l.parse_data()    
+    # # get the dataset characteristics
+    # l.parse_data()    
 
-    # tokenize the data
-    l.tokenization()
+    # # tokenize the data
+    # l.tokenization()
 
-    # initialize the model
-    l.model_construction()
+    # # initialize the model
+    # l.model_construction()
 
-    # train the model
-    l.model_training()
-
+    # # train the model
+    # l.model_training()
+    print('hello')
 
 
 
