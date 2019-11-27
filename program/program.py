@@ -523,10 +523,8 @@ def main():
     # instantiate the class
     l = LSTM_network()
 
-    print(l.training_dir)
-
     # # load the data
-    # l.data_load(l.training_dir)
+    l.data_load(os.path.join(l.training_dir, 'train.csv'))
 
     # # get the dataset characteristics
     # l.parse_data()    
