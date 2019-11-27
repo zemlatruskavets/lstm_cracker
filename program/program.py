@@ -75,7 +75,7 @@ import pandas as pd
 import pickle
 import psutil
 import random
-import s3fs
+# import s3fs
 import sys
 import uuid
 import yaml
@@ -101,7 +101,7 @@ from tqdm                         import tqdm
 
 
 # open access to S3 bucket
-s3 = s3fs.S3FileSystem(s3_additional_kwargs={'ServerSideEncryption': 'AES256'})
+# s3 = s3fs.S3FileSystem(s3_additional_kwargs={'ServerSideEncryption': 'AES256'})
 
 # Import variables from config file
 with open("config.yml", 'r') as config:
