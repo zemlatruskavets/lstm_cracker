@@ -146,6 +146,7 @@ class LSTM_network():
         self.epochs          = variables['model']['epochs']
         self.batch_size      = variables['model']['batch_size']
         self.hidden_units    = variables['model']['hidden_units']
+        self.gpu_count       = variables['model']['gpu_count']
         self.model_name      = variables['model']['name']
         self.data_path       = variables['S3']['data_path']
         self.bucket          = variables['S3']['bucket_name']
@@ -393,7 +394,11 @@ class LSTM_network():
         save_checkpoint = ModelCheckpoint('%s.h5' % self.model_name, monitor='val_acc', save_best_only=True)
         early_stopping  = EarlyStopping(monitor='loss', patience=5)
 
-        # train network
+        # add support for multiple GPUs
+        if self.gpu_count > 1:
+            self.model = multi_gpu_model(self.model, gpus=self.gpu_count)
+
+        # train the network
         self.history = self.model.fit_generator(generator=training_generator,
                                  validation_data=test_generator,
                                  epochs=self.epochs, 

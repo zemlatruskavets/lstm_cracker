@@ -3,6 +3,7 @@ model:
   epochs       : 100
   batch_size   : 128
   hidden_units : 100
+  gpu_count    : 1    
 
 S3:
   bucket_name     : blstm_cracker
