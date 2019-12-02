@@ -189,7 +189,7 @@ class LSTM_network():
         # with s3.open('%s/%s.parquet' % (self.bucket, self.data_path), 'rb') as f:
         #     self.data = dd.read_parquet(f)
 
-        self.data = pd.read_csv(data_location)
+        self.data = pd.read_csv(data_location, usecols=[0])
 
         # drop the rows with NaN values 
         self.data = self.data.dropna()
@@ -526,17 +526,17 @@ def main():
     # load the data
     l.data_load(l.training_dir)
 
-    # # get the dataset characteristics
-    # l.parse_data()    
+    # get the dataset characteristics
+    l.parse_data()    
 
-    # # tokenize the data
-    # l.tokenization()
+    # tokenize the data
+    l.tokenization()
 
-    # # initialize the model
-    # l.model_construction()
+    # initialize the model
+    l.model_construction()
 
-    # # train the model
-    # l.model_training()
+    # train the model
+    l.model_training()
     print('hello')
 
 
