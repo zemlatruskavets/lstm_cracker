@@ -76,7 +76,7 @@ import pandas as pd
 import pickle
 import psutil
 import random
-# import s3fs
+import s3fs
 import sys
 import uuid
 import yaml
@@ -91,18 +91,19 @@ from generator                    import DataGenerator
 from keras.callbacks              import ModelCheckpoint, EarlyStopping
 from keras.layers                 import Embedding, LSTM, Dense, Bidirectional
 from keras.models                 import Sequential, load_model
-# from keras.preprocessing.text     import Tokenizer, tokenizer_from_json
+from keras.preprocessing.text     import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils                  import to_categorical
-# from pympler.asizeof              import asizeof
+from pympler.asizeof              import asizeof
 from sklearn.model_selection      import train_test_split
 from statistics                   import median
-# from tqdm                         import tqdm
+from tqdm                         import tqdm
+from utils                        import tokenizer_from_json
 
 
 
 # open access to S3 bucket
-# s3 = s3fs.S3FileSystem(s3_additional_kwargs={'ServerSideEncryption': 'AES256'})
+s3 = s3fs.S3FileSystem(s3_additional_kwargs={'ServerSideEncryption': 'AES256'})
 
 # Import variables from config file
 with open("config.yml", 'r') as config:
@@ -150,6 +151,7 @@ class LSTM_network():
         self.model_name      = variables['model']['name']
         self.data_path       = variables['S3']['data_path']
         self.bucket          = variables['S3']['bucket_name']
+        self.folder          = variables['S3']['folder']
         self.tokenizer_name  = variables['S3']['tokenizer_name']
         self.training_params = variables['S3']['training_params']
         self.history_pkl     = variables['S3']['history_pkl']
@@ -186,8 +188,8 @@ class LSTM_network():
 
 
         # read the dataset from the S3 bucket and store it as a dask dataframe
-        # with s3.open('%s/%s.parquet' % (self.bucket, self.data_path), 'rb') as f:
-        #     self.data = dd.read_parquet(f)
+#         with s3.open('%s/%s.parquet' % (self.bucket, self.data_path), 'rb') as f:
+#             self.data = dd.read_parquet(f)
 
         self.data = pd.read_csv(data_location, usecols=[0])
 
@@ -231,11 +233,11 @@ class LSTM_network():
         self.vocabulary_size   = len(self.unique_characters)
         self.max_length        = self.data['Password'].str.len().max()
 
-
-
-
-
-
+        
+        
+        
+        
+        
     def tokenization(self):
         """
         Parse the data and determine some dataset properties.
@@ -286,12 +288,12 @@ class LSTM_network():
         self.ix_to_character = {i: j for j, i in self.character_to_ix.items()}
 
         # persist the tokenizer
-        # with s3.open('%s/%s' % (self.bucket, self.tokenizer_name), 'w') as f:
-        #     f.write(json.dumps(self.tokenizer.to_json(), ensure_ascii=False))
+        with s3.open('%s/%s/%s' % (self.bucket, self.folder, self.tokenizer_name), 'w') as f:
+            f.write(json.dumps(self.tokenizer.to_json(), ensure_ascii=False))
 
         # save the index-to-character dictionary and self.vocabulary_size values
-        # with s3.open('%s/%s' % (self.bucket, self.training_params), 'wb') as f:
-        #     pickle.dump([self.ix_to_character, self.vocabulary_size, self.max_length], f)
+        with s3.open('%s/%s/%s' % (self.bucket, self.folder, self.training_params), 'wb') as f:
+            pickle.dump([self.ix_to_character, self.vocabulary_size, self.max_length], f)
 
         # this encodes the passwords
         tokens = self.tokenizer.texts_to_sequences(passwords)
@@ -421,15 +423,15 @@ class LSTM_network():
                                  verbose=1).history
 
         # save the history variable
-        # with s3.open('%s/%s.pkl' % (self.bucket, self.history_pkl), 'wb') as f:
-        #     pickle.dump(self.history, f)
+        with s3.open('%s/%s/%s.pkl' % (self.bucket, self.folder, self.history_pkl), 'wb') as f:
+            pickle.dump(self.history, f)
         
         # save the model in an S3 bucket
         self.model.save('%s.h5' % self.model_name)
-        # with open('%s.h5' % self.model_name, "rb") as f:
-        #     client.upload_fileobj(Fileobj=f, 
-        #                           Bucket=self.bucket, 
-        #                           Key='%s.h5' % self.model_name)
+#         with open('%s.h5' % self.model_name, "rb") as f:
+#             client.upload_fileobj(Fileobj=f, 
+#                                   Bucket=self.bucket, 
+#                                   Key='%s.h5' % self.model_name)
 
 
         print("finished training model")
