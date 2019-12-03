@@ -66,6 +66,7 @@ To do
 
 
 import argparse
+import boto3
 import dateutil.parser as dp
 import gc
 import json
@@ -104,6 +105,7 @@ from utils                        import tokenizer_from_json
 
 # open access to S3 bucket
 s3 = s3fs.S3FileSystem(s3_additional_kwargs={'ServerSideEncryption': 'AES256'})
+client = boto3.client('s3')
 
 # Import variables from config file
 with open("config.yml", 'r') as config:
@@ -144,12 +146,9 @@ class LSTM_network():
     def __init__(self):
 
         # load variables from the config file
-        self.epochs          = variables['model']['epochs']
-        self.batch_size      = variables['model']['batch_size']
         self.hidden_units    = variables['model']['hidden_units']
         self.gpu_count       = variables['model']['gpu_count']
         self.model_name      = variables['model']['name']
-        self.data_path       = variables['S3']['data_path']
         self.bucket          = variables['S3']['bucket_name']
         self.folder          = variables['S3']['folder']
         self.tokenizer_name  = variables['S3']['tokenizer_name']
@@ -161,11 +160,13 @@ class LSTM_network():
         parser = argparse.ArgumentParser()
 
         parser.add_argument('--epochs', type=int, default=10)
+        parser.add_argument('--batch_size', type=int, default=128)
         parser.add_argument('--training', type=str)
         
         args, _ = parser.parse_known_args()
         
         self.epochs       = args.epochs
+        self.batch_size   = args.batch_size
         self.training_dir = args.training
         
 
@@ -423,15 +424,15 @@ class LSTM_network():
                                  verbose=1).history
 
         # save the history variable
-        with s3.open('%s/%s/%s.pkl' % (self.bucket, self.folder, self.history_pkl), 'wb') as f:
+        with s3.open('%s/%s/%s' % (self.bucket, self.folder, self.history_pkl), 'wb') as f:
             pickle.dump(self.history, f)
         
         # save the model in an S3 bucket
         self.model.save('%s.h5' % self.model_name)
-#         with open('%s.h5' % self.model_name, "rb") as f:
-#             client.upload_fileobj(Fileobj=f, 
-#                                   Bucket=self.bucket, 
-#                                   Key='%s.h5' % self.model_name)
+        with open('%s.h5' % self.model_name, "rb") as f:
+            client.upload_fileobj(Fileobj=f, 
+                                  Bucket=self.bucket, 
+                                  Key='%s/output/%s.h5' % (self.folder, self.model_name))
 
 
         print("finished training model")
@@ -539,7 +540,6 @@ def main():
 
     # train the model
     l.model_training()
-    print('hello')
 
 
 
