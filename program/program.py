@@ -171,6 +171,8 @@ class LSTM_network():
         self.epochs       = args.epochs
         self.batch_size   = args.batch_size
         self.training_dir = args.training
+
+        self.output_location = '%s/%s/output' % (self.bucket, self.folder)
         
 
 
@@ -192,9 +194,6 @@ class LSTM_network():
 
 
         # read the dataset from the S3 bucket and store it as a dask dataframe
-#         with s3.open('%s/%s.parquet' % (self.bucket, self.data_path), 'rb') as f:
-#             self.data = dd.read_parquet(f)
-
         self.data = pd.read_csv(data_location, usecols=[0])
 
         # drop the rows with NaN values 
@@ -292,11 +291,11 @@ class LSTM_network():
         self.ix_to_character = {i: j for j, i in self.character_to_ix.items()}
 
         # persist the tokenizer
-        with s3.open('%s/%s/%s' % (self.bucket, self.folder, self.tokenizer_name), 'w') as f:
+        with s3.open('%s/%s' % (self.output_location, self.tokenizer_name), 'w') as f:
             f.write(json.dumps(self.tokenizer.to_json(), ensure_ascii=False))
 
         # save the index-to-character dictionary and self.vocabulary_size values
-        with s3.open('%s/%s/%s' % (self.bucket, self.folder, self.training_params), 'wb') as f:
+        with s3.open('%s/%s' % (self.output_location, self.training_params), 'wb') as f:
             pickle.dump([self.ix_to_character, self.vocabulary_size, self.max_length], f)
 
         # this encodes the passwords
@@ -427,7 +426,7 @@ class LSTM_network():
                                  verbose=1).history
 
         # save the history variable
-        with s3.open('%s/%s/%s' % (self.bucket, self.folder, self.history_pkl), 'wb') as f:
+        with s3.open('%s/%s' % (self.output_location, self.history_pkl), 'wb') as f:
             pickle.dump(self.history, f)
         
         # save the hdf5 model in an S3 bucket
