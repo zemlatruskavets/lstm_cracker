@@ -79,6 +79,7 @@ import psutil
 import random
 import s3fs
 import sys
+import tensorflow as tf
 import uuid
 import yaml
 
@@ -433,6 +434,9 @@ class LSTM_network():
             client.upload_fileobj(Fileobj=f, 
                                   Bucket=self.bucket, 
                                   Key='%s/output/%s.h5' % (self.folder, self.model_name))
+
+        # save the model in /opt/ml/model
+        tf.contrib.saved_model.save_keras_model(self.model, '/opt/ml/model')
 
 
         print("finished training model")
