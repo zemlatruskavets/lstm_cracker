@@ -406,7 +406,7 @@ class LSTM_network():
         print(psutil.virtual_memory())
 
         # callbacks during training
-        save_checkpoint = ModelCheckpoint('%s.h5' % self.model_name, monitor='val_acc', save_best_only=True)
+        save_checkpoint = ModelCheckpoint('%s.h5' % self.model_name, monitor='val_accuracy', save_best_only=True)
         early_stopping  = EarlyStopping(monitor='loss', patience=5)
 
         # add support for multiple GPUs
@@ -437,10 +437,10 @@ class LSTM_network():
                                   Key='%s/output/%s.h5' % (self.folder, self.model_name))
 
         # save the model in /opt/ml/model
-        # self.model.save('/opt/ml/model/1', save_format='tf')
-        # tf.saved_model.save(self.model, "/opt/ml/model")
+        self.model.save('/opt/ml/model')
+        # tf.saved_model.save(self.model, os.environ['SM_MODEL_DIR'])
         # tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
-        tf.keras.experimental.export(self.model, os.environ['SM_MODEL_DIR'])
+        # tf.keras.experimental.export(self.model, os.environ['SM_MODEL_DIR'])
 
         # with tf.keras.backend.get_session() as sess:
         #     sess.run(tf.global_variables_initializer())
