@@ -92,6 +92,7 @@ from functools                    import partial
 from generator                    import DataGenerator
 from keras.callbacks              import ModelCheckpoint, EarlyStopping
 from keras.layers                 import Embedding, LSTM, Dense, Bidirectional
+from keras                        import backend as K
 from keras.models                 import Sequential, load_model
 from keras.preprocessing.text     import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -436,7 +437,16 @@ class LSTM_network():
                                   Key='%s/output/%s.h5' % (self.folder, self.model_name))
 
         # save the model in /opt/ml/model
-        tf.contrib.saved_model.save_keras_model(self.model, '/opt/ml/model')
+        self.model.save('/opt/ml/model/1', save_format='tf')
+        # sess = K.get_session()
+        
+        # tf.saved_model.simple_save(
+        # tf.Session(),
+        # os.path.join(model_dir, 'model/1'),
+        # inputs={'inputs': model.input},
+        # outputs={t.name: t for t in model.outputs})
+
+        # tf.contrib.saved_model.save_keras_model(self.model, '/opt/ml/model')
 
 
         print("finished training model")
