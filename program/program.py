@@ -445,7 +445,8 @@ class LSTM_network():
         sess = K.get_session()
         tf.saved_model.simple_save(
             sess,
-            os.path.join(os.environ['SM_MODEL_DIR'], 'model/1'),
+            os.environ['SM_MODEL_DIR'],
+            # os.path.join(os.environ['SM_MODEL_DIR'], 'model/1'),
             inputs={'inputs': self.model.input},
             outputs={t.name: t for t in self.model.outputs})
 
