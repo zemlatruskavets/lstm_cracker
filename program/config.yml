@@ -6,8 +6,8 @@ model:
   gpu_count    : 1    
 
 S3:
-  bucket_name     : production-enrichment-repo
-  folder:           blstm
+  bucket_name     : blstm-cracker
+  folder          : test-run
   tokenizer_name  : blstm.json
   training_params : training_params.pkl
   data_path       : cleartext_passwords.csv
