@@ -430,53 +430,21 @@ class LSTM_network():
         with s3.open('%s/%s/%s' % (self.bucket, self.folder, self.history_pkl), 'wb') as f:
             pickle.dump(self.history, f)
         
-        # save the model in an S3 bucket
+        # save the hdf5 model in an S3 bucket
         self.model.save('%s.h5' % self.model_name)
         with open('%s.h5' % self.model_name, "rb") as f:
             client.upload_fileobj(Fileobj=f, 
                                   Bucket=self.bucket, 
                                   Key='%s/output/%s.h5' % (self.folder, self.model_name))
 
-        # save the model in /opt/ml/model
-        # tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
-
-
-        # save Keras model for Tensorflow Serving
+        # save Keras model for Tensorflow Serving in /opt/ml/model/1
         sess = K.get_session()
         tf.saved_model.simple_save(
             sess,
-            os.environ['SM_MODEL_DIR'],
-            # os.path.join(os.environ['SM_MODEL_DIR'], '1'),
+            os.path.join(os.environ['SM_MODEL_DIR'], '1'),
             inputs={'inputs': self.model.input},
             outputs={t.name: t for t in self.model.outputs})
 
-        print('the model was supposedly put here: %s' % os.path.join(os.environ['SM_MODEL_DIR'], '1'))
-
-
-        # tf.saved_model.save(self.model, os.environ['SM_MODEL_DIR'])
-        # tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
-        # tf.keras.experimental.export(self.model, os.environ['SM_MODEL_DIR'])
-
-        # with tf.keras.backend.get_session() as sess:
-        #     sess.run(tf.global_variables_initializer())
-        #     tf.saved_model.simple_save(
-        #         sess,
-        #         os.environ['SM_MODEL_DIR'],
-        #         inputs={'input_image': self.model.input},
-        #         outputs={t.name: t for t in self.model.outputs})
-        
-        # sess = K.get_session()
-        # tf.saved_model.simple_save(
-        # sess,
-        # '/opt/ml/model',
-        # inputs={'inputs': self.model.input},
-        # outputs={t.name: t for t in self.model.outputs})
-
-
-        # my_tf_estimator.export_saved_model( os.environ.get('SM_MODEL_DIR'), serving_input_fn, assets_extra=None, as_text=False, checkpoint_path=None)
-
-        # tf.contrib.saved_model.save_keras_model(self.model, '/opt/ml/model')
-        # '%s/1' % os.environ['SM_MODEL_DIR'],
 
         print("finished training model")
 
