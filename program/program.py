@@ -439,15 +439,15 @@ class LSTM_network():
         # save the model in /opt/ml/model
         # self.model.save('/opt/ml/model/1', save_format='tf')
         # tf.saved_model.save(self.model, "/opt/ml/model")
-        tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
-        # with tf.keras.backend.get_session() as sess:
-        #     sess.run(tf.global_variables_initializer())
-        #     tf.saved_model.simple_save(
-        #         sess,
-        #         '/opt/ml/model',
-        #         inputs={'input_image': self.model.input},
-        #         outputs={t.name: t for t in self.model.outputs})
-        # # sess = K.get_session()
+        # tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
+        with tf.keras.backend.get_session() as sess:
+            sess.run(tf.global_variables_initializer())
+            tf.saved_model.simple_save(
+                sess,
+                os.environ['SM_MODEL_DIR'],
+                inputs={'input_image': self.model.input},
+                outputs={t.name: t for t in self.model.outputs})
+        # sess = K.get_session()
         
         # tf.saved_model.simple_save(
         # tf.Session(),
