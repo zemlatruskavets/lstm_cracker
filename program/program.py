@@ -453,12 +453,12 @@ class LSTM_network():
         sess = K.get_session()
         tf.saved_model.simple_save(
         sess,
-        '%s/1' % os.environ['SM_MODEL_DIR'],
+        '/opt/ml/model',
         inputs={'inputs': self.model.input},
         outputs={t.name: t for t in self.model.outputs})
 
         # tf.contrib.saved_model.save_keras_model(self.model, '/opt/ml/model')
-
+        # '%s/1' % os.environ['SM_MODEL_DIR'],
 
         print("finished training model")
 
