@@ -438,7 +438,7 @@ class LSTM_network():
                                   Key='%s/output/%s.h5' % (self.folder, self.model_name))
 
         # save the model in /opt/ml/model
-        tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
+        # tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
 
 
         # save Keras model for Tensorflow Serving
