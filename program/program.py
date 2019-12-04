@@ -446,11 +446,11 @@ class LSTM_network():
         tf.saved_model.simple_save(
             sess,
             # os.environ['SM_MODEL_DIR'],
-            os.path.join(os.environ['SM_MODEL_DIR'], 'model/1'),
+            os.path.join(os.environ['SM_MODEL_DIR'], '1'),
             inputs={'inputs': self.model.input},
             outputs={t.name: t for t in self.model.outputs})
 
-        print('the model was supposedly put here: %s' % os.path.join(os.environ['SM_MODEL_DIR'], 'model/1'))
+        print('the model was supposedly put here: %s' % os.path.join(os.environ['SM_MODEL_DIR'], '1'))
 
 
         # tf.saved_model.save(self.model, os.environ['SM_MODEL_DIR'])
