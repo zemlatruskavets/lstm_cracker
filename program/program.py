@@ -437,7 +437,13 @@ class LSTM_network():
                                   Key='%s/output/%s.h5' % (self.folder, self.model_name))
 
         # save the model in /opt/ml/model
-        self.model.save('/opt/ml/model/1', save_format='tf')
+        # self.model.save('/opt/ml/model/1', save_format='tf')
+        with tf.keras.backend.get_session() as sess:
+            tf.saved_model.simple_save(
+                sess,
+                '/opt/ml/model/1',
+                inputs={'input_image': self.model.input},
+                outputs={t.name: t for t in self.model.outputs})
         # sess = K.get_session()
         
         # tf.saved_model.simple_save(
