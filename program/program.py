@@ -78,6 +78,7 @@ import pickle
 import psutil
 import random
 import s3fs
+import shutil as sh
 import sys
 import tensorflow as tf
 import uuid
@@ -437,7 +438,8 @@ class LSTM_network():
                                   Key='%s/output/%s.h5' % (self.folder, self.model_name))
 
         # save the model in /opt/ml/model
-        # self.model.save('/opt/ml/model')
+        self.model.save('/opt/ml/model')
+        sh.copyfile('%s.h5' % self.model_name, '/opt/ml/model/%s.h5' % self.model_name)
         # tf.saved_model.save(self.model, os.environ['SM_MODEL_DIR'])
         # tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
         # tf.keras.experimental.export(self.model, os.environ['SM_MODEL_DIR'])
@@ -450,12 +452,15 @@ class LSTM_network():
         #         inputs={'input_image': self.model.input},
         #         outputs={t.name: t for t in self.model.outputs})
         
-        sess = K.get_session()
-        tf.saved_model.simple_save(
-        sess,
-        '/opt/ml/model',
-        inputs={'inputs': self.model.input},
-        outputs={t.name: t for t in self.model.outputs})
+        # sess = K.get_session()
+        # tf.saved_model.simple_save(
+        # sess,
+        # '/opt/ml/model',
+        # inputs={'inputs': self.model.input},
+        # outputs={t.name: t for t in self.model.outputs})
+
+
+        # my_tf_estimator.export_saved_model( os.environ.get('SM_MODEL_DIR'), serving_input_fn, assets_extra=None, as_text=False, checkpoint_path=None)
 
         # tf.contrib.saved_model.save_keras_model(self.model, '/opt/ml/model')
         # '%s/1' % os.environ['SM_MODEL_DIR'],
