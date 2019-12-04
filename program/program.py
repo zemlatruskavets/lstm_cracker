@@ -439,6 +439,17 @@ class LSTM_network():
 
         # save the model in /opt/ml/model
         tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
+
+
+        # save Keras model for Tensorflow Serving
+        sess = K.get_session()
+        tf.saved_model.simple_save(
+            sess,
+            os.path.join(os.environ['SM_MODEL_DIR'], 'model/1'),
+            inputs={'inputs': self.model.input},
+            outputs={t.name: t for t in self.model.outputs})
+
+
         # tf.saved_model.save(self.model, os.environ['SM_MODEL_DIR'])
         # tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
         # tf.keras.experimental.export(self.model, os.environ['SM_MODEL_DIR'])
