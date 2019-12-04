@@ -438,8 +438,7 @@ class LSTM_network():
                                   Key='%s/output/%s.h5' % (self.folder, self.model_name))
 
         # save the model in /opt/ml/model
-        self.model.save('/opt/ml/model')
-        sh.copyfile('%s.h5' % self.model_name, '/opt/ml/model/%s.h5' % self.model_name)
+        tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
         # tf.saved_model.save(self.model, os.environ['SM_MODEL_DIR'])
         # tf.contrib.saved_model.save_keras_model(self.model, "/opt/ml/model")
         # tf.keras.experimental.export(self.model, os.environ['SM_MODEL_DIR'])
