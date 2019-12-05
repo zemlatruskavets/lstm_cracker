@@ -518,9 +518,9 @@ class LSTM_network():
 
 
 
-    def guess(self, sequence, alterations, additions, top):
+    def guess(self, sequence, alterations):
         """
-        Calculate the probability of a given sequence.
+        Generate a list of replacement candidates for a given password.
 
 
         Parameters
@@ -528,19 +528,23 @@ class LSTM_network():
         sequence
             The sequence to be altered.
         alterations
-            The number of characters in the input sequence to alter.
-        additions
-            The number of characters to add to the sequence.
-        top
-            The number of most likely candidates to return.
+            The number of alterations to make to the input sequence.
 
         Returns
         -------
-        dict
-            Keys correspond to the number of alterations.
-            Values correspond to the top N guesses.
+        candidates : list
+            list of candidates 
 
         """
+
+        from rules import external_rules_engine
+
+        top_candidates = external_rules_engine(sequence, 100)
+
+
+        return top_candidates
+
+
 
 
 
