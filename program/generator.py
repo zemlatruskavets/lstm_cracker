@@ -72,9 +72,9 @@ class DataGenerator(keras.utils.Sequence):
         x = []
 
         for index, element in enumerate(password):
-            x_padded = pad_sequences([password[:index]],
-                                        maxlen=self.max_length - 1,
-                                        padding='pre')[0]  # pads at the beginning
+            x_padded = pad_sequences(data=[password[:index]],
+                                     maxlen=self.max_length - 1,
+                                     padding='pre')[0]  # pads at the beginning
             x.append(x_padded)
 
 

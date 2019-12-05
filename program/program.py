@@ -65,6 +65,7 @@ To do
 ################################################################################
 
 
+# full imports
 import argparse
 import boto3
 import dateutil.parser as dp
@@ -85,7 +86,7 @@ import uuid
 import yaml
 
 
-
+# partial imports
 from datetime                     import datetime, time, timedelta
 from concurrent.futures           import ProcessPoolExecutor
 from concurrent.futures           import ThreadPoolExecutor
@@ -105,10 +106,10 @@ from tqdm                         import tqdm
 from utils                        import tokenizer_from_json
 
 
-
 # open access to S3 bucket
 s3     = s3fs.S3FileSystem(s3_additional_kwargs={'ServerSideEncryption': 'AES256'})
 client = boto3.client('s3')
+
 
 # Import variables from config file
 with open("config.yml", 'r') as config:
@@ -167,22 +168,23 @@ class LSTM_network():
         args, _ = parser.parse_known_args()
         
         # store the arguments as variables
-        self.epochs       = args.epochs
-        self.batch_size   = args.batch_size
-        self.hidden_units = args.hidden_units
-        self.training_dir = args.training
+        self.epochs          = args.epochs
+        self.batch_size      = args.batch_size
+        self.hidden_units    = args.hidden_units
+        self.training_path   = args.training
         self.output_location = '%s/%s/output' % (self.bucket, self.folder)
         
 
 
-    def data_load(self, data_location):
+    def data_load(self):
         """
-        Load the data from some remote location.
+        Load and clean the dataset from a specified location in S3.
+
 
         Parameters
         ----------
-        data_location : str
-            The path to the password dataset.
+        training_path : str
+            The path to the password dataset in S3.
 
         Returns
         -------
@@ -192,8 +194,8 @@ class LSTM_network():
         """
 
 
-        # read the dataset from the S3 bucket and store it as a dask dataframe
-        self.data = pd.read_csv(data_location, usecols=[0])
+        # read the dataset from an S3 bucket and store it as a pandas dataframe
+        self.data = pd.read_csv(self.training_path, usecols=[0])
 
         # drop the rows with NaN values 
         self.data = self.data.dropna()
@@ -242,13 +244,13 @@ class LSTM_network():
         
     def tokenization(self):
         """
-        Parse the data and determine some dataset properties.
+        Tokenize the characters in the passwords.
 
 
         Parameters
         ----------
         data : pd.DataFrame
-            The dataset containing the passwords.
+            The dataframe containing the passwords.
         vocabulary_size : int
             The number of unique characters in the dataset.
         max_length : int
@@ -320,10 +322,12 @@ class LSTM_network():
 
         Parameters
         ----------
-        vocabulary_size
+        vocabulary_size : int
             The number of unique characters in the dataset.
-        max_length
+        max_length : int
             The length of the longest password.
+        hidden_units : int
+            The number of hidden units in the LSTM network.
 
         Outputs
         -------
@@ -335,11 +339,11 @@ class LSTM_network():
 
         # build the model
         self.model = Sequential()
-        self.model.add(Embedding(input_dim=self.vocabulary_size + 1,             # vocabulary size plus an extra element for <PAD> 
-                                output_dim=int(self.vocabulary_size ** (1./4)),  # size of embeddings; fourth root of cardinality
-                                input_length=self.max_length - 1))               # length of the padded sequences
-        self.model.add(Bidirectional(LSTM(self.hidden_units)))                   # size of hidden layer; n_h ~= n_s / (2(n_i + n_o)) 
-        self.model.add(Dense(self.vocabulary_size, activation='softmax'))        # output
+        self.model.add(Embedding(input_dim=self.vocabulary_size + 1,              # vocabulary size plus an extra element for <PAD> 
+                                 output_dim=int(self.vocabulary_size ** (1./4)),  # size of embeddings; fourth root of cardinality
+                                 input_length=self.max_length - 1))               # length of the padded sequences
+        self.model.add(Bidirectional(LSTM(self.hidden_units)))                    # size of hidden layer; n_h ~= n_s / (2(n_i + n_o)) 
+        self.model.add(Dense(self.vocabulary_size, activation='softmax'))         # output
         self.model.compile('rmsprop', 'categorical_crossentropy')
 
         print(self.model.summary())
@@ -352,6 +356,13 @@ class LSTM_network():
     def model_training(self):
         """
         Train the model.
+
+        The dataset of tokenized passwords is split, using a sliding window, into 
+        sublists of sequences of each password. The sliding window step is handled
+        by the generator defined in generator.py. This process is used to generate 
+        additional data that allows the network to learn the expected character given 
+        an input sequence. This is ultimately how the probability of a given password
+        is calculated.
 
 
         Parameters
@@ -370,6 +381,8 @@ class LSTM_network():
             The Keras model created in model_construction.
         bucket : str
             The name of the S3 bucket in which the results are stored.
+        folder : str
+            The name of the folder in the above S3 bucket in which the results are stored.
         history_pkl : str
             The name of the pickle object to store in S3.
         model_name : str
@@ -466,7 +479,7 @@ class LSTM_network():
         tokenizer : 
             The Keras tokenizer object.
         ix_to_character : 
-            The c-to-character dictionary.
+            The index-to-character dictionary.
         data : pd.DataFrame
             The dataset, including the tokenized passwords.
 
@@ -538,7 +551,7 @@ def main():
     l = LSTM_network()
 
     # load the data
-    l.data_load(l.training_dir)
+    l.data_load()
 
     # get the dataset characteristics
     l.parse_data()    
