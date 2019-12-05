@@ -107,7 +107,7 @@ from utils                        import tokenizer_from_json
 
 
 # open access to S3 bucket
-s3 = s3fs.S3FileSystem(s3_additional_kwargs={'ServerSideEncryption': 'AES256'})
+s3     = s3fs.S3FileSystem(s3_additional_kwargs={'ServerSideEncryption': 'AES256'})
 client = boto3.client('s3')
 
 # Import variables from config file
@@ -149,29 +149,28 @@ class LSTM_network():
     def __init__(self):
 
         # load variables from the config file
-        self.hidden_units    = variables['model']['hidden_units']
-        self.gpu_count       = variables['model']['gpu_count']
         self.model_name      = variables['model']['name']
+        self.gpu_count       = variables['model']['gpu_count']
         self.bucket          = variables['S3']['bucket_name']
         self.folder          = variables['S3']['folder']
         self.tokenizer_name  = variables['S3']['tokenizer_name']
         self.training_params = variables['S3']['training_params']
         self.history_pkl     = variables['S3']['history_pkl']
-        self.data_path       = variables['data']['path']
 
 
+        # parse the arguments 
         parser = argparse.ArgumentParser()
-
-        parser.add_argument('--epochs', type=int, default=10)
-        parser.add_argument('--batch_size', type=int, default=128)
-        parser.add_argument('--training', type=str)
-        
+        parser.add_argument('--epochs',       type=int, default=10)
+        parser.add_argument('--batch_size',   type=int, default=128)
+        parser.add_argument('--hidden_units', type=int, default=100)
+        parser.add_argument('--training',     type=str)
         args, _ = parser.parse_known_args()
         
+        # store the arguments as variables
         self.epochs       = args.epochs
         self.batch_size   = args.batch_size
+        self.hidden_units = args.hidden_units
         self.training_dir = args.training
-
         self.output_location = '%s/%s/output' % (self.bucket, self.folder)
         
 
@@ -232,7 +231,7 @@ class LSTM_network():
         """
 
         self.data_length       = len(self.data)
-        self.unique_characters = sorted(list(set(''.join(self.data['Password']))))
+        self.unique_characters = list(set(''.join(self.data['Password'])))
         self.vocabulary_size   = len(self.unique_characters)
         self.max_length        = self.data['Password'].str.len().max()
 
@@ -339,7 +338,7 @@ class LSTM_network():
         self.model.add(Embedding(input_dim=self.vocabulary_size + 1,             # vocabulary size plus an extra element for <PAD> 
                                 output_dim=int(self.vocabulary_size ** (1./4)),  # size of embeddings; fourth root of cardinality
                                 input_length=self.max_length - 1))               # length of the padded sequences
-        self.model.add(Bidirectional(LSTM(50)))                                  # size of hidden layer; n_h ~= n_s / (2(n_i + n_o)) 
+        self.model.add(Bidirectional(LSTM(self.hidden_units)))                   # size of hidden layer; n_h ~= n_s / (2(n_i + n_o)) 
         self.model.add(Dense(self.vocabulary_size, activation='softmax'))        # output
         self.model.compile('rmsprop', 'categorical_crossentropy')
 
@@ -406,7 +405,9 @@ class LSTM_network():
         print(psutil.virtual_memory())
 
         # callbacks during training
-        save_checkpoint = ModelCheckpoint('%s.h5' % self.model_name, monitor='val_accuracy', save_best_only=True)
+        save_checkpoint = ModelCheckpoint(filepath       = '%s.h5' % self.model_name, 
+                                          monitor        = 'val_accuracy', 
+                                          save_best_only = True)
         early_stopping  = EarlyStopping(monitor='loss', patience=5)
 
         # add support for multiple GPUs
@@ -414,16 +415,16 @@ class LSTM_network():
             self.model = multi_gpu_model(self.model, gpus=self.gpu_count)
 
         # train the network
-        self.history = self.model.fit_generator(generator=training_generator,
-                                 validation_data=test_generator,
-                                 epochs=self.epochs, 
-                                 steps_per_epoch=(len(training) // self.batch_size),
-                                 validation_steps=(len(testing) // self.batch_size),
-                                 callbacks=[save_checkpoint, early_stopping],
-                                 use_multiprocessing=True,
-                                 workers=multiprocessing.cpu_count(),
-                                 max_queue_size=multiprocessing.cpu_count()*2,
-                                 verbose=1).history
+        self.history = self.model.fit_generator(generator           = training_generator,
+                                                validation_data     = test_generator,
+                                                epochs              = self.epochs, 
+                                                steps_per_epoch     = (len(training) // self.batch_size),
+                                                validation_steps    = (len(testing) // self.batch_size),
+                                                callbacks           = [save_checkpoint, early_stopping],
+                                                use_multiprocessing = True,
+                                                workers             = multiprocessing.cpu_count(),
+                                                max_queue_size      = multiprocessing.cpu_count()*2,
+                                                verbose             = 1).history
 
         # save the history variable
         with s3.open('%s/%s' % (self.output_location, self.history_pkl), 'wb') as f:
