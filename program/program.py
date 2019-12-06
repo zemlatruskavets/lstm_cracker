@@ -49,8 +49,9 @@ variables : dict
 
 To do
 -----
-1) Put the parts saving data to S3 into a single function and invoke that
-2) Think through the guessing code.
+1) load the model if it already exists (model_construction)
+2) handle larger than memory datasets
+3) adapt this for processes
 
 """
 
@@ -335,6 +336,8 @@ class LSTM_network():
             The Keras model.
 
         """
+
+        # handle model loading
 
 
         # build the model

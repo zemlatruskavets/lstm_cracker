@@ -38,41 +38,33 @@ def tokenizer_from_json(json_string):
     return tokenizer
 
 
-# def csv_to_tfrecords(csv_file, tfrecords_name):
-    
-#     read the csv values into a variable
-#     csv = pandas.read_csv(csv_file).values
-#     with tf.python_io.TFRecordWriter(tfrecords_name) as writer:
-#         for row in csv:
-#             example = tf.train.Example()
-#             example.features.feature["row"].bytes_list.value.extend(features)
-#             writer.write(example.SerializeToString())
-
-
-
-
 
 
 
 def create_tf_example_row(input_row):
 
+    # convert to string
+    password = str(input_row[0])
+
+    # create tf example
     tf_example = tf.train.Example(features=tf.train.Features(feature={
-        'Password': tf.train.Feature(bytes_list=tf.train.BytesList(value=[input_row[0].encode('utf-8')]))
+        'Password': tf.train.Feature(bytes_list=tf.train.BytesList(value=[password.encode('utf-8')]))
     }))
     return tf_example
 
 
 
-def csv_to_tfrecords(csv_file, tfrecords_name):
-    csv = pd.read_csv(csv_file).values
-    with open(tf.python_io.TFRecordWriter(tfrecords_name)) as writer:
-      for row in csv:
-         example = create_tf_example(row)
-         writer.write(example.SerializeToString())
 
+def csv_to_tfrecords(csv_file, outfile):
 
+    # read in the csv file
+    csv = pd.read_csv(csv_file, usecols=[0]).values
 
-
+    # convert each row to tfrecord
+    with tf.python_io.TFRecordWriter(outfile) as writer:
+        for row in csv:
+            example = create_tf_example_row(row)
+            writer.write(example.SerializeToString())
 
 
 
