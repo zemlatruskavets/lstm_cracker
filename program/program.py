@@ -538,8 +538,8 @@ def _input_fn(channel):
         parsed = tf.parse_single_example(record, passwords)
         print(parsed)
         # ensure that the passwords are strings
-        passwords = tf.cast(parsed['Password'], tf.string)            ​
-    ​
+        passwords = tf.cast(parsed['Password'], tf.string)
+        
         # return the passwords as a dictionary
         return {'Password': passwords}
 
