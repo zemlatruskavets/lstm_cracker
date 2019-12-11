@@ -520,48 +520,47 @@ class LSTM_network():
 
 
 
-# # run the program
-# def main():
+# run the program
+def main():
 
 
-def _input_fn(channel):
-    """Returns a Dataset for reading from a SageMaker PipeMode channel."""
-    
-    # define the format
-    passwords = {
-      'Password': tf.FixedLenFeature([], tf.string)
-    }
+    def _input_fn(channel):
+        """Returns a Dataset for reading from a SageMaker PipeMode channel."""
+        
+        # define the format
+        passwords = {
+          'Password': tf.FixedLenFeature([], tf.string)
+        }
 
-    def parse(record):
-        # map the feature keys to tensors
-        parsed = tf.parse_single_example(record, passwords)
-        print(parsed)
-        # ensure that the passwords are strings
-        passwords = tf.cast(parsed['Password'], tf.string)
+        def parse(record):
+            # map the feature keys to tensors
+            parsed = tf.parse_single_example(record, passwords)
+            print(parsed)
+            # ensure that the passwords are strings
+            passwords = tf.cast(parsed['Password'], tf.string)
 
-        # return the passwords as a dictionary
-        return {'Password': passwords}
-
-
-    ds = PipeModeDataset(channel=channel, record_format='TFRecord')
-
-    ds = ds.repeat(MAX_EPOCHS)
-    ds = ds.prefetch(PREFETCH_SIZE)
-    ds = ds.map(parse, num_parallel_calls=NUM_PARALLEL_BATCHES)
-    ds = ds.batch(BATCH_SIZE)
-
-    print('THE FUNCTION LOADING THE DATA IS HERE')
-    print(ds)
-    
-    return ds
-
-def train_input_fn(training_dir, params):
-    """Returns input function that would feed the model during training"""
-    return _input_fn('train')
+            # return the passwords as a dictionary
+            return {'Password': passwords}
 
 
+        ds = PipeModeDataset(channel=channel, record_format='TFRecord')
 
-def model_fn():
+        ds = ds.repeat(MAX_EPOCHS)
+        ds = ds.prefetch(PREFETCH_SIZE)
+        ds = ds.map(parse, num_parallel_calls=NUM_PARALLEL_BATCHES)
+        ds = ds.batch(BATCH_SIZE)
+
+        print('THE FUNCTION LOADING THE DATA IS HERE')
+        print(ds)
+        
+        return ds
+
+    def train_input_fn(training_dir, params):
+        """Returns input function that would feed the model during training"""
+        return _input_fn('train')
+
+
+
 
     print('executing now')
 
@@ -585,7 +584,7 @@ def model_fn():
 
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
 
 
