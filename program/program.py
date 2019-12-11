@@ -104,7 +104,7 @@ from pympler.asizeof              import asizeof
 from sklearn.model_selection      import train_test_split
 from statistics                   import median
 from tqdm                         import tqdm
-# from utils                        import tokenizer_from_json
+from utils                        import tokenizer_from_json
 
 
 # open access to S3 bucket

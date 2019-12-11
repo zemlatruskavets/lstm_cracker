@@ -1,8 +1,19 @@
 # -*- coding: utf-8 -*-
-​import json
+​
+"""
+
+These are functions that are currently unorganized
+
+"""
+
+
+# full imports
+import json
 import os
-import pandas as pd
+import pandas     as pd
 import tensorflow as tf
+
+# partial imports
 from keras.preprocessing.text import Tokenizer
 ​
 ​
