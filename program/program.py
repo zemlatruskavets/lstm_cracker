@@ -536,7 +536,7 @@ def _input_fn(channel):
     def parse(record):
         # map the feature keys to tensors
         parsed = tf.parse_single_example(record, passwords)
-    ​
+        print(parsed)
         # ensure that the passwords are strings
         passwords = tf.cast(parsed['Password'], tf.string)            ​
     ​
