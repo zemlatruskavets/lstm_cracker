@@ -113,7 +113,7 @@ client = boto3.client('s3')
 
 # Import variables from config file
 with open("config.yml", 'r') as config:
-    variables = yaml.load(config)
+    variables = yaml.load(config, Loader=yaml.FullLoader)
 
 
 
@@ -546,7 +546,7 @@ def model_fn(features):
 
     # train the model
     l.model_training()
-
+    
 
 def _input_fn(channel):
     """Returns a Dataset for reading from a SageMaker PipeMode channel."""
