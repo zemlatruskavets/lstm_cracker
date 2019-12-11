@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-​
-import json
+​import json
 import os
 import pandas as pd
 import tensorflow as tf
