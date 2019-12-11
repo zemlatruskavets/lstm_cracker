@@ -104,7 +104,6 @@ from pympler.asizeof              import asizeof
 from sklearn.model_selection      import train_test_split
 from statistics                   import median
 from tqdm                         import tqdm
-# from utils                        import tokenizer_from_json
 
 
 # open access to S3 bucket
@@ -539,7 +538,7 @@ def _input_fn(channel):
         print(parsed)
         # ensure that the passwords are strings
         passwords = tf.cast(parsed['Password'], tf.string)
-        
+
         # return the passwords as a dictionary
         return {'Password': passwords}
 
@@ -563,6 +562,8 @@ def train_input_fn(training_dir, params):
 
 
 def model_fn():
+
+    print('executing now')
 
     # instantiate the class
     l = LSTM_network()
