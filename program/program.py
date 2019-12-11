@@ -550,6 +550,9 @@ def _input_fn(channel):
     ds = ds.prefetch(PREFETCH_SIZE)
     ds = ds.map(parse, num_parallel_calls=NUM_PARALLEL_BATCHES)
     ds = ds.batch(BATCH_SIZE)
+
+    print('THE FUNCTION LOADING THE DATA IS HERE')
+    print(ds)
     
     return ds
 
@@ -560,7 +563,7 @@ def train_input_fn(training_dir, params):
 
 
 def model_fn():
-    
+
     # instantiate the class
     l = LSTM_network()
 
