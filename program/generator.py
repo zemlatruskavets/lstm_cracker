@@ -1,8 +1,9 @@
 
 import gc
 import keras
+import modin.pandas as pd
 import numpy as np
-import pandas as pd
+import pandas
 import psutil
 from keras.preprocessing.sequence import pad_sequences
 

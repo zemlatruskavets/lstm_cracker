@@ -72,10 +72,11 @@ import boto3
 import dateutil.parser as dp
 import gc
 import json
+import modin.pandas as pd
 import multiprocessing
-import numpy  as np
+import numpy as np
 import os
-import pandas as pd
+import pandas
 import pickle
 import psutil
 import random
