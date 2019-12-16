@@ -5,10 +5,9 @@ This is used for a downstream process that iteratively generates rules lists for
 
 Usage
 -----
-To run the program, include the dataset containing the cleartext 
-passwords as the first argument. The code will handle the rest.
+To run the program, follow along with the included Jupyter notebook (`passwords.ipynb`). 
+Provide the specified arguments in the initial cells of the notebook.
 
-    $ python3 program.py <path_to_dataset>
 
 Notes
 -----
