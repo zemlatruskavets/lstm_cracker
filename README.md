@@ -1,7 +1,7 @@
 This module trains a bidirectional long short-term memory (LSTM) 
 network on a dataset consisting of cleartext passwords.
-The trained network is then used to predict the most likely
-alterations and/or additions to a given sequence.
+The trained network is then used to calculate the probability of a given password. 
+This is used for a downstream process that iteratively generates rules lists for password dumps.
 
 Example
 -------
