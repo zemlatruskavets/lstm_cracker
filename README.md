@@ -12,7 +12,7 @@ Provide the specified arguments in the initial cells of the notebook.
 Notes
 -----
 The dataset is assumed to contain no information other than the 
-cleartext passwords.
+cleartext passwords in a single column.
 
 The network parameters (e.g., number of hidden units, embedding
 layer, etc.) are defined in the configuration file (`config.yml`).
