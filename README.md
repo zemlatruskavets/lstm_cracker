@@ -35,9 +35,6 @@ This is the basic flow of the code:
 
 Attributes
 ----------
-    s3 : str
-        This variable holds connection information and allows typical file-system 
-        style operations to interact with files stored in an S3 bucket.
 
     variables : dict
         This dictionary holds the configuration variables defined in config.yml
