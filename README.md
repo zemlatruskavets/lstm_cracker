@@ -3,8 +3,8 @@ network on a dataset consisting of cleartext passwords.
 The trained network is then used to calculate the probability of a given password. 
 This is used for a downstream process that iteratively generates rules lists for password dumps.
 
-Example
--------
+Usage
+-----
 To run the program, include the dataset containing the cleartext 
 passwords as the first argument. The code will handle the rest.
 
