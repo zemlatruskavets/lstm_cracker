@@ -9,8 +9,9 @@ These are functions that are currently unorganized
 
 # full imports
 import json
+import modin.pandas as pd
 import os
-import pandas     as pd
+import pandas
 import tensorflow as tf
 
 # partial imports

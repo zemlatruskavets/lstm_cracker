@@ -1,19 +1,18 @@
 This module trains a bidirectional long short-term memory (LSTM) 
 network on a dataset consisting of cleartext passwords.
-The trained network is then used to predict the most likely
-alterations and/or additions to a given sequence.
+The trained network is then used to calculate the probability of a given password. 
+This is used for a downstream process that iteratively generates rules lists for password dumps.
 
-Example
--------
-To run the program, include the dataset containing the cleartext 
-passwords as the first argument. The code will handle the rest.
+Usage
+-----
+To run the program, follow along with the included Jupyter notebook (`passwords.ipynb`). 
+Provide the specified arguments in the initial cells of the notebook.
 
-    $ python3 program.py <path_to_dataset>
 
 Notes
 -----
 The dataset is assumed to contain no information other than the 
-cleartext passwords.
+cleartext passwords in a single column.
 
 The network parameters (e.g., number of hidden units, embedding
 layer, etc.) are defined in the configuration file (`config.yml`).
@@ -36,9 +35,6 @@ This is the basic flow of the code:
 
 Attributes
 ----------
-    s3 : str
-        This variable holds connection information and allows typical file-system 
-        style operations to interact with files stored in an S3 bucket.
 
     variables : dict
         This dictionary holds the configuration variables defined in config.yml
