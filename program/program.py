@@ -202,7 +202,10 @@ class LSTM_network():
 
         # get rid of duplicate rows
         self.data = self.data.drop_duplicates()
-
+        
+        # truncate dataset
+        self.data = self.data.head(10000)
+        
 
 
 
@@ -273,6 +276,7 @@ class LSTM_network():
 
         """
 
+        
         # get the password column as its own array
         passwords = self.data['Password']
 
@@ -281,21 +285,26 @@ class LSTM_network():
 
         # generate the tokenized passwords      
         self.tokenizer.fit_on_texts(passwords)
-
+        print('here: 1')
+        
         # generate the character-to-index dictionary 
         self.character_to_ix = self.tokenizer.word_index
-
+        print('here: 2')
+        
         # generate the index-to-character dictionary too
         self.ix_to_character = {i: j for j, i in self.character_to_ix.items()}
-
+        print('here: 3')
+        
         # persist the tokenizer
         with s3.open('%s/%s' % (self.output_location, self.tokenizer_name), 'w') as f:
             f.write(json.dumps(self.tokenizer.to_json(), ensure_ascii=False))
-
+        print('here: 4')
+            
         # save the index-to-character dictionary and self.vocabulary_size values
         with s3.open('%s/%s' % (self.output_location, self.training_params), 'wb') as f:
             pickle.dump([self.ix_to_character, self.vocabulary_size, self.max_length], f)
-
+        print('here: 5')
+            
         # this encodes the passwords
         tokens = self.tokenizer.texts_to_sequences(passwords)
 
