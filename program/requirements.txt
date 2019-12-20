@@ -67,7 +67,7 @@ mock==2.0.0
 modin==0.6.3
 MouseInfo==0.0.4
 numpy==1.15.4
-pandas==0.23.4
+pandas==0.25.3
 parso==0.3.1
 pathspec==0.5.9
 pathtools==0.1.2
