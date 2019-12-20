@@ -8,6 +8,8 @@ import pandas
 import psutil
 from keras.preprocessing.sequence import pad_sequences
 
+# define logger
+log = logging.getLogger("lstm-cracker-{}".format(datetime.date.today()))
 
 
 
@@ -52,7 +54,7 @@ class DataGenerator(keras.utils.Sequence):
 
         # if memory consumption is getting high, log a warning
         if psutil.virtual_memory().percent > 90:
-            logger.info('Memory usage has reached %g%%' % psutil.virtual_memory().percent)
+            log.info('Memory usage has reached %g%%' % psutil.virtual_memory().percent)
 
 
         return X, y
