@@ -78,6 +78,7 @@ import boto3
 import dateutil.parser as dp
 import gc
 import json
+import logging
 import modin.pandas as pd
 import multiprocessing
 import numpy as np
@@ -122,6 +123,8 @@ client = boto3.client('s3')
 with open("config.yml", 'r') as config:
     variables = yaml.load(config, Loader=yaml.FullLoader)
 
+# define logger
+log = logging.getLogger("lstm-cracker-{}".format(datetime.date.today()))
 
 
 
@@ -334,7 +337,7 @@ class LSTM_network():
         self.model.add(Dense(self.vocabulary_size, activation='softmax'))         # output
         self.model.compile('rmsprop', 'categorical_crossentropy')
 
-        print(self.model.summary())
+        log.info(self.model.summary())
 
 
 
@@ -395,15 +398,15 @@ class LSTM_network():
         training, testing = train_test_split(self.data, test_size=0.1)
  
         # check memory
-        print("these are the memory stats prior to training: ")
-        print(psutil.virtual_memory())
+        log.info("these are the memory stats prior to training: ")
+        log.info(psutil.virtual_memory())
 
-        print("starting training of model")
+        log.info("starting training of model")
 
         # define the generators for the training and test datasets
         training_generator = DataGenerator(training, **paramaters)
         test_generator     = DataGenerator(testing, **paramaters)
-        print(psutil.virtual_memory())
+        log.info(psutil.virtual_memory())
 
         # callbacks during training
         save_checkpoint = ModelCheckpoint(filepath       = '%s.h5' % self.model_name, 
@@ -447,7 +450,7 @@ class LSTM_network():
             outputs={t.name: t for t in self.model.outputs})
 
 
-        print("finished training model")
+        log.info("finished training model")
 
 
 
