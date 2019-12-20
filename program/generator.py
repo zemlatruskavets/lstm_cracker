@@ -6,10 +6,11 @@ import modin.pandas as pd
 import numpy as np
 import pandas
 import psutil
+from datetime                     import date
 from keras.preprocessing.sequence import pad_sequences
 
 # define logger
-log = logging.getLogger("lstm-cracker-{}".format(datetime.date.today()))
+log = logging.getLogger("lstm-cracker-{}".format(date.today()))
 
 
 

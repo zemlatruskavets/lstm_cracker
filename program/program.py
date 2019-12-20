@@ -96,7 +96,7 @@ import yaml
 
 
 # partial imports
-from datetime                     import datetime, time, timedelta
+from datetime                     import date, datetime, time, timedelta
 from concurrent.futures           import ProcessPoolExecutor
 from concurrent.futures           import ThreadPoolExecutor
 from functools                    import partial
@@ -124,7 +124,7 @@ with open("config.yml", 'r') as config:
     variables = yaml.load(config, Loader=yaml.FullLoader)
 
 # define logger
-log = logging.getLogger("lstm-cracker-{}".format(datetime.date.today()))
+log = logging.getLogger("lstm-cracker-{}".format(date.today()))
 
 
 
