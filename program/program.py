@@ -1,57 +1,63 @@
 # -*- coding: utf-8 -*-
 """
 
-This module trains a bidirectional long short-term memory (LSTM) 
-network on a dataset consisting solely of cleartext passwords.
-The trained network is then used to predict the most likely
-alterations and/or additions to a given sequence.
+    This code trains a bidirectional long short-term memory (LSTM) 
+    network on a dataset consisting solely of cleartext passwords.
+    The model learns the patterns prevelant in password generation.
+    It calculates the probability of a given password, which enables
+    the comparison of different candidates for a password. This code
+    will ultimately be used in a downstream task that will generate
+    a password rules list in an iterative fashion.
 
-Example
--------
-    To run the program, include the dataset containing the cleartext 
-    passwords as the first argument. The code will handle the rest.
 
-    $ python3 program.py
+Usage
+-----
+    It is assumed that this code is executed from a SageMaker notebook.
+    Both the local and distributed modes have been tested. Please see 
+    the Jupyter notebook (passwords.ipynb) for details.
+
 
 Notes
 -----
-    The dataset is assumed to contain two columns: the usernames and the 
-    cleartext passwords.
+    The dataset is assumed to a single column containing the cleartext
+    passwords.
 
     The network parameters (e.g., number of hidden units, embedding
-    layer, etc.) are defined in the configuration file (config.yml).
+    layer, etc.) are defined in the configuration file (config.yml)
+    and in arguments passed along during the invokation step.
 
     This is the basic flow of the code:
 
-    1) read in data
-        1) clean up data (duplicates, NaN, etc)
-    2) get data characteristics
-        1) determine number of characters
-        2) determine/define longest sequence length
-    3) generator
-        3.1) tokenization
-        3.2) sliding windows
-    4) training
-    5) sequence
-        5.1) for i in sequence, predict most likely candidates in each position
-        5.2) calculate most likely shared candidates
-        5.3) calculate probabilities of overall adjusted sequences
+        1) read in data
+            1) read variables from config file
+            2) parse arguments related to 
+            3) clean up data (duplicates, NaN, etc)
+        2) get data characteristics
+            1) determine number of characters
+            2) determine/define longest sequence length
+            3) determine "vocabulary" size
+        3) generator
+            1) tokenization
+            2) sliding windows
+            3) persist vocab and tokenizer objects in S3
+        4) model construction
+            1) define model
+            2) define generator objects
+            3) train model
+            4) persist model artifacts
+        5) password probability prediction
+            1) use the sliding window code to split up a given password
+            2) use the model to calculate the conditional probabilities 
+            3) take the sum of the logarithms of these probabilities
+            4) calculate the perplexity of the resulting sum
+            5) take the exponential of the resulting value
 
-Attributes
-----------
-s3 : str
-    This variable holds connection information and allows typical file-system 
-    style operations to interact with files stored in an S3 bucket.
-
-variables : dict
-    This dictionary holds the configuration variables defined in config.yml.
-    
 
 To do
 -----
-1) load the model if it already exists (model_construction)
-2) handle larger than memory datasets
-3) adapt this for processes
+    1) load the model if it already exists (`model_construction`)
+    2) get Pipe mode to work to stream data in during training
+    3) Add method to deploy model endpoint after training
 
 """
 
@@ -72,10 +78,11 @@ import boto3
 import dateutil.parser as dp
 import gc
 import json
+import modin.pandas as pd
 import multiprocessing
-import numpy  as np
+import numpy as np
 import os
-import pandas as pd
+import pandas
 import pickle
 import psutil
 import random
@@ -121,29 +128,7 @@ with open("config.yml", 'r') as config:
 
 class LSTM_network():
     """
-    Exceptions are documented in the same way as classes.
-
-    The __init__ method may be documented in either the class level
-    docstring, or as a docstring on the __init__ method itself.
-
-    Either form is acceptable, but the two should not be mixed. Choose one
-    convention to document the __init__ method and be consistent with it.
-
-    Note
-    ----
-    Do not include the `self` parameter in the ``Parameters`` section.
-
-    Parameters
-    ----------
-    msg : str
-        Human readable string describing the exception.
-    code : :obj:`int`, optional
-        Numeric error code.
-
-    Attributes
-    ----------
-    data_path : str
-        Path to dataset.
+    Train a BLSTM network on a cleartext password dataset.
 
     """
 
@@ -202,7 +187,10 @@ class LSTM_network():
 
         # get rid of duplicate rows
         self.data = self.data.drop_duplicates()
-
+        
+        # truncate dataset
+        self.data = self.data.head(10000)
+        
 
 
 
@@ -273,6 +261,7 @@ class LSTM_network():
 
         """
 
+        
         # get the password column as its own array
         passwords = self.data['Password']
 
@@ -281,21 +270,21 @@ class LSTM_network():
 
         # generate the tokenized passwords      
         self.tokenizer.fit_on_texts(passwords)
-
+        
         # generate the character-to-index dictionary 
         self.character_to_ix = self.tokenizer.word_index
-
+        
         # generate the index-to-character dictionary too
         self.ix_to_character = {i: j for j, i in self.character_to_ix.items()}
-
+        
         # persist the tokenizer
         with s3.open('%s/%s' % (self.output_location, self.tokenizer_name), 'w') as f:
             f.write(json.dumps(self.tokenizer.to_json(), ensure_ascii=False))
-
+            
         # save the index-to-character dictionary and self.vocabulary_size values
         with s3.open('%s/%s' % (self.output_location, self.training_params), 'wb') as f:
             pickle.dump([self.ix_to_character, self.vocabulary_size, self.max_length], f)
-
+            
         # this encodes the passwords
         tokens = self.tokenizer.texts_to_sequences(passwords)
 
@@ -390,7 +379,7 @@ class LSTM_network():
 
         Returns
         -------
-        history : 
+        history : obj
             The Keras history object.
 
 
@@ -466,7 +455,10 @@ class LSTM_network():
 
     def password_probability(self, password):
         """
-        Calculate the probability of a given password.
+        Calculate the probability of a given password. This works by 
+        determining the product of the individual probabilities of a 
+        given character conditional to the appearance of the preceding
+        characters.
 
 
         Parameters
@@ -477,7 +469,7 @@ class LSTM_network():
             The Keras model.
         tokenizer : 
             The Keras tokenizer object.
-        ix_to_character : 
+        ix_to_character : dict
             The index-to-character dictionary.
         data : pd.DataFrame
             The dataset, including the tokenized passwords.
@@ -495,15 +487,14 @@ class LSTM_network():
         x_test = np.array(x_test)
         y_test = token - 1
 
-        # determine the probabilities of the permutations of the words
+        # determine the probabilities of the permutations of the characters
         probabilities = self.model.predict(x_test, verbose=0)
 
-        # calculate the probability of the password
+        # multiply all of the conditional probabilities together in the password
         password_probability = 0
         for index, probability in enumerate(probabilities):
-            word                  = self.ix_to_character[y_test[index] + 1]  # the first element is <PAD>
-            word_probability      = probability[y_test[index]]               # get the probability from the model
-            password_probability += np.log(word_probability)                 # use log to avoid roundoff errors
+            char_probability      = probability[y_test[index]]  # get the probability from the model
+            password_probability += np.log(char_probability)    # use log to avoid roundoff errors
 
         # calculate the perplexity to account for varying password lengths
         password_length       = len(password)    
