@@ -99,7 +99,7 @@ python-docx==0.8.10
 python-usda==0.4.4
 PyTweening==1.0.3
 pytz==2018.7
-PyYAML==5.1.2
+PyYAML==5.4
 ray==0.7.3
 requests==2.20.1
 requests-file==1.4.3
