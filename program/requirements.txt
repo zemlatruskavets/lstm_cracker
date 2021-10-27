@@ -20,7 +20,7 @@ Click==7.0
 cloudpickle==1.2.2
 colorama==0.3.9
 cycler==0.10.0
-dask==1.0.0
+dask==2021.10.0
 DateTime==4.3
 decorator==4.3.0
 docker==3.7.3
