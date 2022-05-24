@@ -115,7 +115,7 @@ soupsieve==1.6.2
 speech==0.5.2
 streamlit==0.47.4
 tensorboard==1.13.1
-tensorflow==1.15.4
+tensorflow==2.6.4
 tensorflow-estimator==1.13.0
 termcolor==1.1.0
 texttable==0.9.1
